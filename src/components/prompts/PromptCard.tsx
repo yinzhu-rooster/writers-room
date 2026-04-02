@@ -10,8 +10,6 @@ interface PromptCardProps {
 }
 
 export function PromptCard({ prompt, isOpen }: PromptCardProps) {
-  const typeLabel = prompt.prompt_type.charAt(0).toUpperCase() + prompt.prompt_type.slice(1);
-
   return (
     <Link
       href={`/prompts/${prompt.id}`}
@@ -19,16 +17,6 @@ export function PromptCard({ prompt, isOpen }: PromptCardProps) {
     >
       <div className="flex items-start justify-between gap-3">
         <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 mb-1">
-            <span className="text-xs font-medium text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-full">
-              {typeLabel}
-            </span>
-            {prompt.is_system_generated && (
-              <span className="text-xs font-medium text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full">
-                System
-              </span>
-            )}
-          </div>
           <p className="text-gray-900 font-medium line-clamp-2">{prompt.body}</p>
           <div className="mt-2 flex items-center gap-3 text-sm text-gray-500">
             <span>{prompt.submission_count} pitches</span>

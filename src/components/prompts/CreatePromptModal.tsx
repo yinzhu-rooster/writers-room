@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useFocusTrap } from '@/hooks/useFocusTrap';
-import type { PromptType } from '@/types/enums';
 
 interface CreatePromptModalProps {
   open: boolean;
@@ -10,17 +9,8 @@ interface CreatePromptModalProps {
   onCreated: () => void;
 }
 
-const PROMPT_TYPES: { value: PromptType; label: string }[] = [
-  { value: 'headline', label: 'Headline' },
-  { value: 'setup', label: 'Setup' },
-  { value: 'format', label: 'Format' },
-  { value: 'topical', label: 'Topical' },
-  { value: 'evergreen', label: 'Evergreen' },
-];
-
 export function CreatePromptModal({ open, onClose, onCreated }: CreatePromptModalProps) {
   const [body, setBody] = useState('');
-  const [promptType, setPromptType] = useState<PromptType>('evergreen');
   const [durationHours, setDurationHours] = useState(24);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -50,7 +40,7 @@ export function CreatePromptModal({ open, onClose, onCreated }: CreatePromptModa
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         body: body.trim(),
-        prompt_type: promptType,
+        prompt_type: 'evergreen',
         duration_hours: durationHours,
       }),
     });
@@ -63,7 +53,6 @@ export function CreatePromptModal({ open, onClose, onCreated }: CreatePromptModa
     }
 
     setBody('');
-    setPromptType('evergreen');
     setDurationHours(24);
     setError('');
     setLoading(false);
@@ -88,19 +77,6 @@ export function CreatePromptModal({ open, onClose, onCreated }: CreatePromptModa
               className="w-full rounded-lg border border-gray-300 px-3 py-2 text-gray-900 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none resize-none"
             />
             <div className="text-xs text-gray-400 text-right">{body.length}/500</div>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Type</label>
-            <select
-              value={promptType}
-              onChange={(e) => setPromptType(e.target.value as PromptType)}
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-gray-900 outline-none"
-            >
-              {PROMPT_TYPES.map((t) => (
-                <option key={t.value} value={t.value}>{t.label}</option>
-              ))}
-            </select>
           </div>
 
           <div>

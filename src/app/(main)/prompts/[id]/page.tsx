@@ -40,14 +40,6 @@ export default function PromptDetailPage() {
     <div>
       <div className="mb-6">
         <div className="flex items-center gap-2 mb-2">
-          <span className="text-xs font-medium text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-full">
-            {prompt.prompt_type.charAt(0).toUpperCase() + prompt.prompt_type.slice(1)}
-          </span>
-          {prompt.is_system_generated && (
-            <span className="text-xs font-medium text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full">
-              System
-            </span>
-          )}
           {isOpen ? (
             <CountdownTimer closesAt={prompt.closes_at} onExpired={loadPrompt} />
           ) : (
