@@ -57,27 +57,35 @@ export async function GET(request: NextRequest) {
   }
 
   if (sort === 'top3_pct') {
-    // Need to query pitches for top3 counts — minimum 100 pitches
-    const enriched = await Promise.all(
-      users.filter((u) => u.total_reps >= 100).map(async (u) => {
-        const { count: totalPitches } = await supabase
-          .from('pitches')
-          .select('*', { count: 'exact', head: true })
-          .eq('user_id', u.id)
-          .is('deleted_at', null)
-          .not('rank', 'is', null);
+    // Single query: fetch all ranked pitches, then compute top3_pct per user in JS
+    const eligibleUsers = users.filter((u) => u.total_reps >= 100);
+    const eligibleIds = eligibleUsers.map((u) => u.id);
 
-        const { count: top3Count } = await supabase
-          .from('pitches')
-          .select('*', { count: 'exact', head: true })
-          .eq('user_id', u.id)
-          .is('deleted_at', null)
-          .lte('rank', 3);
+    if (eligibleIds.length === 0) {
+      return NextResponse.json({ leaderboard: [], total: 0, page, page_size: PAGE_SIZE, sort });
+    }
 
-        const pct = totalPitches ? ((top3Count ?? 0) / totalPitches) * 100 : 0;
-        return { ...u, top3_pct: Math.round(pct * 10) / 10 };
-      })
-    );
+    const { data: rankedPitches } = await supabase
+      .from('pitches')
+      .select('user_id, rank')
+      .in('user_id', eligibleIds)
+      .is('deleted_at', null)
+      .not('rank', 'is', null);
+
+    // Tally per user
+    const stats = new Map<string, { total: number; top3: number }>();
+    for (const p of rankedPitches ?? []) {
+      const s = stats.get(p.user_id) ?? { total: 0, top3: 0 };
+      s.total++;
+      if (p.rank <= 3) s.top3++;
+      stats.set(p.user_id, s);
+    }
+
+    const enriched = eligibleUsers.map((u) => {
+      const s = stats.get(u.id);
+      const pct = s && s.total > 0 ? (s.top3 / s.total) * 100 : 0;
+      return { ...u, top3_pct: Math.round(pct * 10) / 10 };
+    });
 
     const sorted = enriched.sort((a, b) => b.top3_pct - a.top3_pct);
 

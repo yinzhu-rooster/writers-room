@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { badRequest, unauthorized, safeJson } from '@/lib/api-error';
+import { usernameSchema } from '@/lib/validators/username';
 
 export async function POST(request: NextRequest) {
   const supabase = await createClient();
@@ -10,15 +11,10 @@ export async function POST(request: NextRequest) {
 
   const json = await safeJson<{ username?: string }>(request);
   if (json instanceof NextResponse) return json;
-  const { username } = json;
-  const trimmed = (username ?? '').trim();
+  const trimmed = (json.username ?? '').trim();
 
-  if (trimmed.length < 3 || trimmed.length > 20) {
-    return badRequest('Username must be 3-20 characters');
-  }
-  if (!/^[a-zA-Z0-9_]+$/.test(trimmed)) {
-    return badRequest('Username can only contain letters, numbers, and underscores');
-  }
+  const parsed = usernameSchema.safeParse(trimmed);
+  if (!parsed.success) return badRequest(parsed.error.issues[0].message);
 
   // Use admin client to bypass RLS
   const admin = createAdminClient();

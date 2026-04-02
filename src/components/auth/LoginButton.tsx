@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { createClient } from '@/lib/supabase/client';
+import { useFocusTrap } from '@/hooks/useFocusTrap';
 
 export function LoginButton() {
   const [mode, setMode] = useState<'login' | 'signup'>('login');
@@ -47,6 +48,8 @@ export function LoginButton() {
     if (e.key === 'Escape') setShowForm(false);
   }, []);
 
+  const trapRef = useFocusTrap<HTMLDivElement>();
+
   useEffect(() => {
     if (showForm) {
       document.addEventListener('keydown', handleEscape);
@@ -67,7 +70,7 @@ export function LoginButton() {
 
   const modal = (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4" role="dialog" aria-modal="true" aria-label={mode === 'login' ? 'Sign In' : 'Create Account'} onClick={() => setShowForm(false)}>
-      <div className="w-full max-w-sm rounded-xl bg-white p-6 shadow-xl" onClick={(e) => e.stopPropagation()}>
+      <div ref={trapRef} className="w-full max-w-sm rounded-xl bg-white p-6 shadow-xl" onClick={(e) => e.stopPropagation()}>
         <h2 className="text-lg font-bold text-gray-900 mb-4">
           {mode === 'login' ? 'Sign In' : 'Create Account'}
         </h2>

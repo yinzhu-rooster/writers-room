@@ -29,8 +29,8 @@ export function PitchList({ promptId, isOpen, refreshKey }: PitchListProps) {
       const data = await res.json();
       setPitches(data.pitches ?? []);
       setTotal(data.total ?? 0);
-    } catch {
-      // Keep existing pitches on poll failure
+    } catch (err) {
+      console.error('Failed to load pitches:', err);
     }
     setLoading(false);
   }, [promptId, page]);

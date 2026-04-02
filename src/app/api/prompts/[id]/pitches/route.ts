@@ -3,6 +3,8 @@ import { createClient } from '@/lib/supabase/server';
 import { createPitchSchema } from '@/lib/validators/pitch';
 import { badRequest, unauthorized, safeJson } from '@/lib/api-error';
 import { getConfigInt } from '@/lib/config';
+import { serializePitch } from '@/lib/serialize-pitch';
+import { hashSeed, seededShuffle } from '@/lib/shuffle';
 
 const PAGE_SIZE = 20;
 
@@ -34,84 +36,25 @@ export async function GET(
     .eq('prompt_id', promptId)
     .is('deleted_at', null);
 
-  if (isOpen) {
-    // Random order not easily done in Supabase, use created_at and shuffle client-side
-    query = query.order('created_at', { ascending: true });
-  } else {
-    query = query.order('created_at', { ascending: true });
-  }
-
-  query = query.range(offset, offset + PAGE_SIZE - 1);
+  query = query
+    .order('created_at', { ascending: true })
+    .range(offset, offset + PAGE_SIZE - 1);
 
   const { data: pitches, count, error } = await query;
   if (error) return badRequest('Failed to load pitches');
 
-  // Serialize with anonymity rules
-  const serialized = (pitches ?? []).map((pitch) => {
-    const isOwn = user?.id === pitch.user_id;
+  const serialized = (pitches ?? []).map((pitch) =>
+    serializePitch(pitch as never, {
+      currentUserId: user?.id ?? null,
+      isOpen,
+      closesAt: prompt.closes_at,
+    })
+  );
 
-    // Extract current user's reaction
-    const myReaction = user
-      ? (pitch.reactions as { reaction_type: string; user_id: string }[])?.find(
-          (r) => r.user_id === user.id
-        )?.reaction_type ?? null
-      : null;
-
-    const base = {
-      id: pitch.id,
-      prompt_id: pitch.prompt_id,
-      body: pitch.body,
-      created_at: pitch.created_at,
-      edited_at: pitch.edited_at,
-      is_own: isOwn,
-      my_reaction: myReaction,
-    };
-
-    if (isOpen) {
-      // Hide author, hide counts, compute edit_deadline
-      const editDeadline = new Date(
-        Math.min(
-          new Date(pitch.created_at).getTime() + 5 * 60 * 1000,
-          new Date(prompt.closes_at).getTime()
-        )
-      ).toISOString();
-
-      return {
-        ...base,
-        user_id: isOwn ? pitch.user_id : null,
-        username: null,
-        laugh_count: null,
-        smile_count: null,
-        surprise_count: null,
-        total_reaction_count: null,
-        rank: null,
-        is_revealed: false,
-        edit_deadline: isOwn ? editDeadline : null,
-      };
-    } else {
-      // Full data for closed prompts
-      const pitchUser = pitch.users as unknown as { username: string } | null;
-      return {
-        ...base,
-        user_id: pitch.is_revealed || isOwn ? pitch.user_id : null,
-        username: pitch.is_revealed || isOwn ? pitchUser?.username ?? null : null,
-        laugh_count: pitch.laugh_count,
-        smile_count: pitch.smile_count,
-        surprise_count: pitch.surprise_count,
-        total_reaction_count: pitch.total_reaction_count,
-        rank: pitch.rank,
-        is_revealed: pitch.is_revealed,
-        edit_deadline: null,
-      };
-    }
-  });
-
-  // Shuffle for open prompts
+  // Seeded shuffle for open prompts — same user sees same order per prompt+page
   if (isOpen) {
-    for (let i = serialized.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [serialized[i], serialized[j]] = [serialized[j], serialized[i]];
-    }
+    const seed = hashSeed(`${user?.id ?? 'anon'}:${promptId}:${page}`);
+    seededShuffle(serialized, seed);
   }
 
   return NextResponse.json({

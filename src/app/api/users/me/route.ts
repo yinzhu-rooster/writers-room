@@ -2,9 +2,10 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { badRequest, unauthorized, safeJson } from '@/lib/api-error';
 import { z } from 'zod';
+import { usernameSchema } from '@/lib/validators/username';
 
 const updateProfileSchema = z.object({
-  username: z.string().min(3).max(20).regex(/^[a-zA-Z0-9_]+$/).optional(),
+  username: usernameSchema.optional(),
   avatar_url: z.string().url().nullable().optional(),
 });
 
