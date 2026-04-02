@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { ReactionBar } from '@/components/reactions/ReactionBar';
 import { ReactionCounts } from '@/components/reactions/ReactionCounts';
 import { RankBadge } from '@/components/pitches/RankBadge';
@@ -11,6 +11,7 @@ export interface PitchData {
   prompt_id: string;
   body: string;
   user_id: string | null;
+  username: string | null;
   created_at: string;
   edited_at: string | null;
   is_own: boolean;
@@ -34,6 +35,16 @@ interface PitchCardProps {
 
 export function PitchCard({ pitch, isOpen, onReactionChange, onEdit, onDelete }: PitchCardProps) {
   const [showActions, setShowActions] = useState(false);
+  const actionsRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!showActions) return;
+    const handleClick = (e: MouseEvent) => {
+      if (actionsRef.current && !actionsRef.current.contains(e.target as Node)) setShowActions(false);
+    };
+    document.addEventListener('mousedown', handleClick);
+    return () => document.removeEventListener('mousedown', handleClick);
+  }, [showActions]);
 
   const canEdit = isOpen && pitch.is_own && pitch.edit_deadline && new Date(pitch.edit_deadline) > new Date();
   const canDelete = isOpen && pitch.is_own;
@@ -47,14 +58,14 @@ export function PitchCard({ pitch, isOpen, onReactionChange, onEdit, onDelete }:
           <div className="flex items-center gap-2 mt-2 text-xs text-gray-400">
             {pitch.is_own && <span className="text-indigo-600 font-medium">You</span>}
             {pitch.edited_at && <span>(edited)</span>}
-            {!isOpen && pitch.is_revealed && pitch.user_id && !pitch.is_own && (
-              <span className="text-gray-500">by {pitch.user_id}</span>
+            {!isOpen && pitch.is_revealed && pitch.username && !pitch.is_own && (
+              <span className="text-gray-500">by {pitch.username}</span>
             )}
           </div>
         </div>
 
         {pitch.is_own && isOpen && (
-          <div className="relative">
+          <div className="relative" ref={actionsRef}>
             <button
               onClick={() => setShowActions(!showActions)}
               className="text-gray-400 hover:text-gray-600 p-1"

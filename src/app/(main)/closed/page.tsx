@@ -14,12 +14,20 @@ export default function ClosedTopicsPage() {
   const pageSize = 20;
   const totalPages = Math.ceil(total / pageSize);
 
+  const [error, setError] = useState('');
+
   const loadPrompts = useCallback(async () => {
     setLoading(true);
-    const res = await fetch(`/api/prompts?status=closed&page=${page}`);
-    const data = await res.json();
-    setPrompts(data.prompts ?? []);
-    setTotal(data.total ?? 0);
+    setError('');
+    try {
+      const res = await fetch(`/api/prompts?status=closed&page=${page}`);
+      if (!res.ok) throw new Error('Failed to load');
+      const data = await res.json();
+      setPrompts(data.prompts ?? []);
+      setTotal(data.total ?? 0);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Failed to load');
+    }
     setLoading(false);
   }, [page]);
 
@@ -29,7 +37,9 @@ export default function ClosedTopicsPage() {
     <div>
       <h1 className="text-xl font-bold text-gray-900 mb-6">Closed Topics</h1>
 
-      {loading ? (
+      {error ? (
+        <p className="text-center text-red-600 py-12">{error}</p>
+      ) : loading ? (
         <div className="space-y-3">
           {[1, 2, 3].map((i) => (
             <div key={i} className="h-24 rounded-xl bg-gray-100 animate-pulse" />

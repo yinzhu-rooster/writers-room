@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { createPitchSchema } from '@/lib/validators/pitch';
-import { badRequest, unauthorized } from '@/lib/api-error';
+import { badRequest, unauthorized, safeJson } from '@/lib/api-error';
 import { getConfigInt } from '@/lib/config';
 
 const PAGE_SIZE = 20;
@@ -30,7 +30,7 @@ export async function GET(
 
   let query = supabase
     .from('pitches')
-    .select('*, reactions!left(reaction_type, user_id)', { count: 'exact' })
+    .select('*, users!inner(username), reactions!left(reaction_type, user_id)', { count: 'exact' })
     .eq('prompt_id', promptId)
     .is('deleted_at', null);
 
@@ -44,7 +44,7 @@ export async function GET(
   query = query.range(offset, offset + PAGE_SIZE - 1);
 
   const { data: pitches, count, error } = await query;
-  if (error) return badRequest(error.message);
+  if (error) return badRequest('Failed to load pitches');
 
   // Serialize with anonymity rules
   const serialized = (pitches ?? []).map((pitch) => {
@@ -79,6 +79,7 @@ export async function GET(
       return {
         ...base,
         user_id: isOwn ? pitch.user_id : null,
+        username: null,
         laugh_count: null,
         smile_count: null,
         surprise_count: null,
@@ -89,9 +90,11 @@ export async function GET(
       };
     } else {
       // Full data for closed prompts
+      const pitchUser = pitch.users as unknown as { username: string } | null;
       return {
         ...base,
         user_id: pitch.is_revealed || isOwn ? pitch.user_id : null,
+        username: pitch.is_revealed || isOwn ? pitchUser?.username ?? null : null,
         laugh_count: pitch.laugh_count,
         smile_count: pitch.smile_count,
         surprise_count: pitch.surprise_count,
@@ -128,7 +131,8 @@ export async function POST(
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return unauthorized();
 
-  const body = await request.json();
+  const body = await safeJson(request);
+  if (body instanceof NextResponse) return body;
   const parsed = createPitchSchema.safeParse(body);
   if (!parsed.success) return badRequest(parsed.error.issues[0].message);
 
@@ -170,7 +174,7 @@ export async function POST(
     .select()
     .single();
 
-  if (error) return badRequest(error.message);
+  if (error) return badRequest('Failed to create pitch');
 
   return NextResponse.json(pitch, { status: 201 });
 }

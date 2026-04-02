@@ -1,11 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { rankPitches } from '@/lib/ranking';
+import { timingSafeEqual } from 'crypto';
+
+function verifyCronSecret(authHeader: string | null): boolean {
+  const secret = process.env.CRON_SECRET;
+  if (!secret || !authHeader) return false;
+  const expected = `Bearer ${secret}`;
+  if (expected.length !== authHeader.length) return false;
+  return timingSafeEqual(Buffer.from(expected), Buffer.from(authHeader));
+}
 
 export async function POST(request: NextRequest) {
-  // Verify cron secret
-  const authHeader = request.headers.get('authorization');
-  if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+  if (!verifyCronSecret(request.headers.get('authorization'))) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 

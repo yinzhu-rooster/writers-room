@@ -1,12 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { unauthorized } from '@/lib/api-error';
 
 const PAGE_SIZE = 20;
+const VALID_SORTS = ['total_laughs', 'avg_laughs', 'total_reps', 'top3_pct'] as const;
+type SortMode = typeof VALID_SORTS[number];
 
 export async function GET(request: NextRequest) {
   const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return unauthorized();
+
   const { searchParams } = new URL(request.url);
-  const sort = searchParams.get('sort') ?? 'total_laughs';
+  const rawSort = searchParams.get('sort') ?? 'total_laughs';
+  const sort: SortMode = VALID_SORTS.includes(rawSort as SortMode) ? rawSort as SortMode : 'total_laughs';
   const page = Math.max(1, parseInt(searchParams.get('page') ?? '1', 10));
   const offset = (page - 1) * PAGE_SIZE;
 

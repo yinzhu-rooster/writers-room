@@ -13,15 +13,20 @@ function formatTimeLeft(ms: number): string {
   return `${seconds}s`;
 }
 
-export function CountdownTimer({ closesAt }: { closesAt: string }) {
+export function CountdownTimer({ closesAt, onExpired }: { closesAt: string; onExpired?: () => void }) {
   const [timeLeft, setTimeLeft] = useState(() => new Date(closesAt).getTime() - Date.now());
 
   useEffect(() => {
     const interval = setInterval(() => {
-      setTimeLeft(new Date(closesAt).getTime() - Date.now());
+      const remaining = new Date(closesAt).getTime() - Date.now();
+      setTimeLeft(remaining);
+      if (remaining <= 0) {
+        clearInterval(interval);
+        onExpired?.();
+      }
     }, 1000);
     return () => clearInterval(interval);
-  }, [closesAt]);
+  }, [closesAt, onExpired]);
 
   const isClosed = timeLeft <= 0;
 

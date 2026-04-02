@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 
 interface PitchEditModalProps {
   pitchId: string;
@@ -13,6 +13,15 @@ export function PitchEditModal({ pitchId, initialBody, onClose, onSaved }: Pitch
   const [body, setBody] = useState(initialBody);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+
+  const handleEscape = useCallback((e: KeyboardEvent) => {
+    if (e.key === 'Escape') onClose();
+  }, [onClose]);
+
+  useEffect(() => {
+    document.addEventListener('keydown', handleEscape);
+    return () => document.removeEventListener('keydown', handleEscape);
+  }, [handleEscape]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -37,8 +46,8 @@ export function PitchEditModal({ pitchId, initialBody, onClose, onSaved }: Pitch
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
-      <div className="w-full max-w-md rounded-xl bg-white p-6 shadow-xl">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4" role="dialog" aria-modal="true" aria-label="Edit Pitch" onClick={onClose}>
+      <div className="w-full max-w-md rounded-xl bg-white p-6 shadow-xl" onClick={(e) => e.stopPropagation()}>
         <h2 className="text-lg font-bold text-gray-900 mb-4">Edit Pitch</h2>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>

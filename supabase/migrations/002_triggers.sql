@@ -142,11 +142,32 @@ BEGIN
     RETURN NEW;
   END IF;
 
+  -- Handle DELETE (e.g. cascade from user deletion)
+  IF TG_OP = 'DELETE' THEN
+    IF OLD.deleted_at IS NULL THEN
+      UPDATE prompts SET submission_count = GREATEST(0, submission_count - 1) WHERE id = OLD.prompt_id;
+
+      -- Check if user had no other non-deleted pitches on this prompt
+      SELECT COUNT(*) INTO v_existing_count
+      FROM pitches
+      WHERE prompt_id = OLD.prompt_id
+        AND user_id = OLD.user_id
+        AND deleted_at IS NULL
+        AND id != OLD.id;
+
+      IF v_existing_count = 0 THEN
+        UPDATE users SET total_reps = GREATEST(0, total_reps - 1) WHERE id = OLD.user_id;
+      END IF;
+    END IF;
+
+    RETURN OLD;
+  END IF;
+
   RETURN COALESCE(NEW, OLD);
 END;
 $$ LANGUAGE plpgsql;
 
 CREATE TRIGGER trg_submission_count
-AFTER INSERT OR UPDATE ON pitches
+AFTER INSERT OR UPDATE OR DELETE ON pitches
 FOR EACH ROW
 EXECUTE FUNCTION update_prompt_submission_count();

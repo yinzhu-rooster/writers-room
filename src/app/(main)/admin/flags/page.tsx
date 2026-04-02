@@ -53,8 +53,8 @@ export default function AdminFlagsPage() {
               <span className="text-red-600 font-medium">{f.reason}</span>
               <span className="text-gray-400">{new Date(f.created_at).toLocaleDateString()}</span>
             </div>
-            <p className="text-gray-700 mt-1 line-clamp-2">{f.pitches.body}</p>
-            <p className="text-gray-400 text-xs mt-1">Flagged by {f.users.username}</p>
+            <p className="text-gray-700 mt-1 line-clamp-2">{f.pitches?.body ?? '[deleted]'}</p>
+            <p className="text-gray-400 text-xs mt-1">Flagged by {f.users?.username ?? 'unknown'}</p>
           </div>
         ))}
         {pitchFlags.length === 0 && <p className="text-sm text-gray-500">No pitch flags</p>}
@@ -68,8 +68,8 @@ export default function AdminFlagsPage() {
               <span className="text-red-600 font-medium">{f.reason}</span>
               <span className="text-gray-400">{new Date(f.created_at).toLocaleDateString()}</span>
             </div>
-            <p className="text-gray-700 mt-1 line-clamp-2">{f.prompts.body}</p>
-            <p className="text-gray-400 text-xs mt-1">Flagged by {f.users.username}</p>
+            <p className="text-gray-700 mt-1 line-clamp-2">{f.prompts?.body ?? '[deleted]'}</p>
+            <p className="text-gray-400 text-xs mt-1">Flagged by {f.users?.username ?? 'unknown'}</p>
           </div>
         ))}
         {promptFlags.length === 0 && <p className="text-sm text-gray-500">No prompt flags</p>}

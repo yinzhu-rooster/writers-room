@@ -1,27 +1,37 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { generatePrompts } from '@/lib/ai/prompt-generator';
+import { timingSafeEqual } from 'crypto';
+
+function verifyCronSecret(authHeader: string | null): boolean {
+  const secret = process.env.CRON_SECRET;
+  if (!secret || !authHeader) return false;
+  const expected = `Bearer ${secret}`;
+  if (expected.length !== authHeader.length) return false;
+  return timingSafeEqual(Buffer.from(expected), Buffer.from(authHeader));
+}
 
 export async function POST(request: NextRequest) {
-  // Verify cron secret
-  const authHeader = request.headers.get('authorization');
-  if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+  if (!verifyCronSecret(request.headers.get('authorization'))) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
   const supabase = createAdminClient();
 
   // Idempotency: check if today's system prompts already exist
-  // 9 AM EST = 14:00 UTC
+  // Use proper timezone-aware date computation (handles DST correctly)
   const now = new Date();
-  const todayEST = new Date(now.toLocaleString('en-US', { timeZone: 'America/New_York' }));
-  const year = todayEST.getFullYear();
-  const month = String(todayEST.getMonth() + 1).padStart(2, '0');
-  const day = String(todayEST.getDate()).padStart(2, '0');
+  const todayET = new Date(now.toLocaleString('en-US', { timeZone: 'America/New_York' }));
+  const year = todayET.getFullYear();
+  const month = String(todayET.getMonth() + 1).padStart(2, '0');
+  const day = String(todayET.getDate()).padStart(2, '0');
 
-  // opens_at for today: 9 AM EST
-  const opensAt = new Date(`${year}-${month}-${day}T09:00:00-05:00`);
-  const closesAt = new Date(`${year}-${month}-${day}T18:00:00-05:00`);
+  // Compute the correct UTC offset for America/New_York (handles EST/EDT)
+  const etOffset = now.getTime() - todayET.getTime();
+  const opensLocal = new Date(`${year}-${month}-${day}T09:00:00`);
+  const closesLocal = new Date(`${year}-${month}-${day}T18:00:00`);
+  const opensAt = new Date(opensLocal.getTime() + etOffset);
+  const closesAt = new Date(closesLocal.getTime() + etOffset);
 
   // Check if we already generated for today
   const { count } = await supabase

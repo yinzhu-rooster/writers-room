@@ -23,16 +23,22 @@ export function PitchList({ promptId, isOpen, refreshKey }: PitchListProps) {
 
   const loadPitches = useCallback(async () => {
     setLoading(true);
-    const res = await fetch(`/api/prompts/${promptId}/pitches?page=${page}`);
-    const data = await res.json();
-    setPitches(data.pitches ?? []);
-    setTotal(data.total ?? 0);
+    try {
+      const res = await fetch(`/api/prompts/${promptId}/pitches?page=${page}`);
+      if (!res.ok) throw new Error('Failed to load');
+      const data = await res.json();
+      setPitches(data.pitches ?? []);
+      setTotal(data.total ?? 0);
+    } catch {
+      // Keep existing pitches on poll failure
+    }
     setLoading(false);
   }, [promptId, page]);
 
   useEffect(() => { loadPitches(); }, [loadPitches, refreshKey]);
 
   const handleDelete = async (pitchId: string) => {
+    if (!window.confirm('Delete this pitch? This cannot be undone.')) return;
     const res = await fetch(`/api/pitches/${pitchId}`, { method: 'DELETE' });
     if (res.ok) loadPitches();
   };

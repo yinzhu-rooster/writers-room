@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import type { PromptType } from '@/types/enums';
 
 interface CreatePromptModalProps {
@@ -23,6 +23,17 @@ export function CreatePromptModal({ open, onClose, onCreated }: CreatePromptModa
   const [durationHours, setDurationHours] = useState(24);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+
+  const handleEscape = useCallback((e: KeyboardEvent) => {
+    if (e.key === 'Escape') onClose();
+  }, [onClose]);
+
+  useEffect(() => {
+    if (open) {
+      document.addEventListener('keydown', handleEscape);
+      return () => document.removeEventListener('keydown', handleEscape);
+    }
+  }, [open, handleEscape]);
 
   if (!open) return null;
 
@@ -49,14 +60,17 @@ export function CreatePromptModal({ open, onClose, onCreated }: CreatePromptModa
     }
 
     setBody('');
+    setPromptType('evergreen');
+    setDurationHours(24);
+    setError('');
     setLoading(false);
     onCreated();
     onClose();
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
-      <div className="w-full max-w-md rounded-xl bg-white p-6 shadow-xl">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4" role="dialog" aria-modal="true" aria-label="Create a Prompt" onClick={onClose}>
+      <div className="w-full max-w-md rounded-xl bg-white p-6 shadow-xl" onClick={(e) => e.stopPropagation()}>
         <h2 className="text-lg font-bold text-gray-900 mb-4">Create a Prompt</h2>
 
         <form onSubmit={handleSubmit} className="space-y-4">

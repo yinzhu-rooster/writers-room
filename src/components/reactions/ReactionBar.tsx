@@ -22,7 +22,8 @@ export function ReactionBar({ pitchId, myReaction, onChange }: ReactionBarProps)
   const handleReact = async (type: ReactionType) => {
     setLoading(true);
 
-    // Optimistic update
+    // Optimistic update — capture previous value before setting new
+    const previous = current;
     const newReaction = current === type ? null : type;
     setCurrent(newReaction);
 
@@ -33,7 +34,7 @@ export function ReactionBar({ pitchId, myReaction, onChange }: ReactionBarProps)
     });
 
     if (!res.ok) {
-      setCurrent(current); // Revert
+      setCurrent(previous); // Revert to captured value
     }
 
     setLoading(false);

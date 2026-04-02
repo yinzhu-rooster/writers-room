@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { createClient } from '@/lib/supabase/client';
 
@@ -43,6 +43,17 @@ export function LoginButton() {
     setLoading(false);
   };
 
+  const handleEscape = useCallback((e: KeyboardEvent) => {
+    if (e.key === 'Escape') setShowForm(false);
+  }, []);
+
+  useEffect(() => {
+    if (showForm) {
+      document.addEventListener('keydown', handleEscape);
+      return () => document.removeEventListener('keydown', handleEscape);
+    }
+  }, [showForm, handleEscape]);
+
   if (!showForm) {
     return (
       <button
@@ -55,8 +66,8 @@ export function LoginButton() {
   }
 
   const modal = (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
-      <div className="w-full max-w-sm rounded-xl bg-white p-6 shadow-xl">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4" role="dialog" aria-modal="true" aria-label={mode === 'login' ? 'Sign In' : 'Create Account'} onClick={() => setShowForm(false)}>
+      <div className="w-full max-w-sm rounded-xl bg-white p-6 shadow-xl" onClick={(e) => e.stopPropagation()}>
         <h2 className="text-lg font-bold text-gray-900 mb-4">
           {mode === 'login' ? 'Sign In' : 'Create Account'}
         </h2>
@@ -76,7 +87,7 @@ export function LoginButton() {
             onChange={(e) => setPassword(e.target.value)}
             placeholder="Password"
             required
-            minLength={6}
+            minLength={8}
             className="w-full rounded-lg border border-gray-300 px-4 py-2 text-gray-900 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none"
           />
 

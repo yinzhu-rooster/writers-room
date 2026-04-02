@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { createPromptSchema } from '@/lib/validators/prompt';
-import { badRequest, unauthorized } from '@/lib/api-error';
+import { badRequest, unauthorized, safeJson } from '@/lib/api-error';
 
 const PAGE_SIZE = 20;
 
@@ -31,7 +31,7 @@ export async function GET(request: NextRequest) {
 
   const { data: prompts, count, error } = await query;
 
-  if (error) return badRequest(error.message);
+  if (error) return badRequest('Failed to load prompts');
 
   // Anonymize creator on open prompts
   const serialized = (prompts ?? []).map((p) => {
@@ -55,7 +55,8 @@ export async function POST(request: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return unauthorized();
 
-  const body = await request.json();
+  const body = await safeJson(request);
+  if (body instanceof NextResponse) return body;
   const parsed = createPromptSchema.safeParse(body);
   if (!parsed.success) {
     return badRequest(parsed.error.issues[0].message);
@@ -97,7 +98,7 @@ export async function POST(request: NextRequest) {
     .select()
     .single();
 
-  if (error) return badRequest(error.message);
+  if (error) return badRequest('Failed to create prompt');
 
   return NextResponse.json(prompt, { status: 201 });
 }

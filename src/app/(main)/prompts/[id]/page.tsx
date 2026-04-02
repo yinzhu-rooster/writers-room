@@ -49,7 +49,7 @@ export default function PromptDetailPage() {
             </span>
           )}
           {isOpen ? (
-            <CountdownTimer closesAt={prompt.closes_at} />
+            <CountdownTimer closesAt={prompt.closes_at} onExpired={loadPrompt} />
           ) : (
             <span className="text-sm text-gray-400">Closed</span>
           )}

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useUser } from '@/hooks/useUser';
 
 interface StatsData {
@@ -23,18 +23,28 @@ export default function StatsPage() {
   const { profile, loading: userLoading } = useUser();
   const [stats, setStats] = useState<StatsData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
 
-  useEffect(() => {
-    if (!profile) return;
-    fetch(`/api/users/${profile.id}/stats`)
-      .then((r) => r.json())
-      .then((data) => { setStats(data); setLoading(false); });
+  const loadStats = useCallback(async () => {
+    if (!profile) { setLoading(false); return; }
+    try {
+      const res = await fetch(`/api/users/${profile.id}/stats`);
+      if (!res.ok) throw new Error('Failed to load stats');
+      const data = await res.json();
+      setStats(data);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Failed to load');
+    }
+    setLoading(false);
   }, [profile]);
+
+  useEffect(() => { loadStats(); }, [loadStats]);
 
   if (userLoading || loading) {
     return <div className="space-y-4">{[1, 2, 3].map((i) => <div key={i} className="h-20 rounded-lg bg-gray-100 animate-pulse" />)}</div>;
   }
 
+  if (error) return <p className="text-center text-red-600 py-12">{error}</p>;
   if (!stats) return <p className="text-center text-gray-500 py-12">Sign in to view your stats</p>;
 
   const { user, best_finish, reaction_breakdown, pitch_history } = stats;

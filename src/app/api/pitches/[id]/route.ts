@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { updatePitchSchema } from '@/lib/validators/pitch';
-import { badRequest, unauthorized, forbidden, notFound } from '@/lib/api-error';
+import { badRequest, unauthorized, forbidden, notFound, safeJson } from '@/lib/api-error';
 
 export async function PATCH(
   request: NextRequest,
@@ -12,7 +12,8 @@ export async function PATCH(
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return unauthorized();
 
-  const body = await request.json();
+  const body = await safeJson(request);
+  if (body instanceof NextResponse) return body;
   const parsed = updatePitchSchema.safeParse(body);
   if (!parsed.success) return badRequest(parsed.error.issues[0].message);
 
@@ -46,10 +47,11 @@ export async function PATCH(
       updated_at: new Date().toISOString(),
     })
     .eq('id', id)
+    .eq('user_id', user.id)
     .select()
     .single();
 
-  if (error) return badRequest(error.message);
+  if (error) return badRequest('Failed to update pitch');
 
   return NextResponse.json(updated);
 }
@@ -81,9 +83,10 @@ export async function DELETE(
   const { error } = await supabase
     .from('pitches')
     .update({ deleted_at: new Date().toISOString() })
-    .eq('id', id);
+    .eq('id', id)
+    .eq('user_id', user.id);
 
-  if (error) return badRequest(error.message);
+  if (error) return badRequest('Failed to delete pitch');
 
   return NextResponse.json({ success: true });
 }

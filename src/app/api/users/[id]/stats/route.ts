@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
-import { notFound } from '@/lib/api-error';
+import { notFound, unauthorized } from '@/lib/api-error';
 
 export async function GET(
   _request: NextRequest,
@@ -8,15 +8,17 @@ export async function GET(
 ) {
   const { id } = await params;
   const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return unauthorized();
 
   // Get user profile
-  const { data: user } = await supabase
+  const { data: profileUser } = await supabase
     .from('users')
     .select('id, username, avatar_url, total_reps, total_laughs, created_at')
     .eq('id', id)
     .single();
 
-  if (!user) return notFound('User not found');
+  if (!profileUser) return notFound('User not found');
 
   // Best finish (lowest rank across all pitches)
   const { data: bestFinish } = await supabase
@@ -36,6 +38,7 @@ export async function GET(
     .eq('user_id', id)
     .is('deleted_at', null)
     .not('rank', 'is', null)
+    .eq('is_revealed', true)
     .order('created_at', { ascending: false })
     .limit(50);
 
@@ -56,7 +59,7 @@ export async function GET(
   );
 
   return NextResponse.json({
-    user,
+    user: profileUser,
     best_finish: bestFinish?.rank ?? null,
     pitch_history: pitchHistory ?? [],
     reaction_breakdown: totals,

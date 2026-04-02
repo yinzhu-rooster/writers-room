@@ -1,14 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
-import { badRequest, unauthorized } from '@/lib/api-error';
+import { badRequest, unauthorized, safeJson } from '@/lib/api-error';
 
 export async function POST(request: NextRequest) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return unauthorized();
 
-  const { username } = await request.json();
+  const json = await safeJson<{ username?: string }>(request);
+  if (json instanceof NextResponse) return json;
+  const { username } = json;
   const trimmed = (username ?? '').trim();
 
   if (trimmed.length < 3 || trimmed.length > 20) {
@@ -27,7 +29,7 @@ export async function POST(request: NextRequest) {
 
   if (error) {
     if (error.code === '23505') return badRequest('Username already taken');
-    return badRequest(error.message);
+    return badRequest('Failed to set username');
   }
 
   return NextResponse.json({ success: true });

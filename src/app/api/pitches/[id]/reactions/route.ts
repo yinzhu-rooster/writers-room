@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
-import { badRequest, unauthorized, forbidden } from '@/lib/api-error';
+import { badRequest, unauthorized, forbidden, safeJson } from '@/lib/api-error';
 
 export async function POST(
   request: NextRequest,
@@ -11,8 +11,10 @@ export async function POST(
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return unauthorized();
 
-  const { reaction_type } = await request.json();
-  if (!['smile', 'laugh', 'surprise'].includes(reaction_type)) {
+  const json = await safeJson<{ reaction_type?: string }>(request);
+  if (json instanceof NextResponse) return json;
+  const { reaction_type } = json;
+  if (!reaction_type || !['smile', 'laugh', 'surprise'].includes(reaction_type)) {
     return badRequest('Invalid reaction type');
   }
 
@@ -32,13 +34,13 @@ export async function POST(
     return badRequest('This prompt is closed', 'PROMPT_CLOSED');
   }
 
-  // Upsert reaction
+  // Upsert reaction — use DB upsert to avoid race conditions
   const { data: existing } = await supabase
     .from('reactions')
     .select('id, reaction_type')
     .eq('pitch_id', pitchId)
     .eq('user_id', user.id)
-    .single();
+    .maybeSingle();
 
   if (existing) {
     if (existing.reaction_type === reaction_type) {
@@ -56,14 +58,17 @@ export async function POST(
       return NextResponse.json({ reaction: updated });
     }
   } else {
-    // Insert new
+    // Insert new — use onConflict to handle race with concurrent request
     const { data: created, error } = await supabase
       .from('reactions')
-      .insert({ pitch_id: pitchId, user_id: user.id, reaction_type })
+      .upsert(
+        { pitch_id: pitchId, user_id: user.id, reaction_type },
+        { onConflict: 'pitch_id,user_id' }
+      )
       .select()
       .single();
 
-    if (error) return badRequest(error.message);
+    if (error) return badRequest('Failed to save reaction');
     return NextResponse.json({ reaction: created }, { status: 201 });
   }
 }
@@ -83,7 +88,7 @@ export async function DELETE(
     .eq('pitch_id', pitchId)
     .eq('user_id', user.id);
 
-  if (error) return badRequest(error.message);
+  if (error) return badRequest('Failed to remove reaction');
 
   return NextResponse.json({ success: true });
 }

@@ -32,12 +32,20 @@ export default function LeaderboardPage() {
   const pageSize = 20;
   const totalPages = Math.ceil(total / pageSize);
 
+  const [error, setError] = useState('');
+
   const loadLeaderboard = useCallback(async () => {
     setLoading(true);
-    const res = await fetch(`/api/leaderboard?sort=${sort}&page=${page}`);
-    const data = await res.json();
-    setEntries(data.leaderboard ?? []);
-    setTotal(data.total ?? 0);
+    setError('');
+    try {
+      const res = await fetch(`/api/leaderboard?sort=${sort}&page=${page}`);
+      if (!res.ok) throw new Error('Failed to load');
+      const data = await res.json();
+      setEntries(data.leaderboard ?? []);
+      setTotal(data.total ?? 0);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Failed to load');
+    }
     setLoading(false);
   }, [sort, page]);
 
@@ -48,7 +56,7 @@ export default function LeaderboardPage() {
       case 'total_laughs': return entry.total_laughs;
       case 'avg_laughs': return entry.avg_laughs?.toFixed(1) ?? '0';
       case 'total_reps': return entry.total_reps;
-      case 'top3_pct': return `${entry.top3_pct}%`;
+      case 'top3_pct': return `${entry.top3_pct ?? 0}%`;
     }
   };
 
@@ -72,7 +80,9 @@ export default function LeaderboardPage() {
         ))}
       </div>
 
-      {loading ? (
+      {error ? (
+        <p className="text-center text-red-600 py-12">{error}</p>
+      ) : loading ? (
         <div className="space-y-2">{[1, 2, 3, 4, 5].map((i) => <div key={i} className="h-12 rounded-lg bg-gray-100 animate-pulse" />)}</div>
       ) : entries.length === 0 ? (
         <p className="text-center text-gray-500 py-12">No data yet</p>

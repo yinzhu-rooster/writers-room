@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
-import { badRequest, unauthorized } from '@/lib/api-error';
+import { badRequest, unauthorized, safeJson } from '@/lib/api-error';
 import { z } from 'zod';
 
 const updateProfileSchema = z.object({
@@ -13,7 +13,8 @@ export async function PATCH(request: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return unauthorized();
 
-  const body = await request.json();
+  const body = await safeJson(request);
+  if (body instanceof NextResponse) return body;
   const parsed = updateProfileSchema.safeParse(body);
   if (!parsed.success) return badRequest(parsed.error.issues[0].message);
 
@@ -34,7 +35,7 @@ export async function PATCH(request: NextRequest) {
 
   if (error) {
     if (error.code === '23505') return badRequest('Username already taken');
-    return badRequest(error.message);
+    return badRequest('Failed to update profile');
   }
 
   return NextResponse.json(data);

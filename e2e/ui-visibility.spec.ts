@@ -29,13 +29,12 @@ test.describe('UI visibility checks', () => {
     await page.goto('/closed');
     await page.getByRole('button', { name: 'Sign In' }).click();
 
-    // Modal backdrop should cover full viewport
-    const backdrop = page.locator('.fixed.inset-0');
-    await expect(backdrop).toBeVisible();
+    // Modal dialog should be visible
+    const dialog = page.getByRole('dialog');
+    await expect(dialog).toBeVisible();
 
     // Modal content should be within viewport
-    const modal = page.locator('.rounded-xl.bg-white.shadow-xl');
-    const modalBox = await modal.boundingBox();
+    const modalBox = await dialog.boundingBox();
     const viewport = page.viewportSize()!;
 
     expect(modalBox).not.toBeNull();

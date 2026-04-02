@@ -9,6 +9,18 @@ export function apiError(message: string, status: number, code?: string): NextRe
   return NextResponse.json({ error: message, ...(code && { code }) }, { status });
 }
 
+/**
+ * Safely parse JSON from a request body.
+ * Returns the parsed body or a 400 response if parsing fails.
+ */
+export async function safeJson<T = unknown>(request: Request): Promise<T | NextResponse<ApiError>> {
+  try {
+    return await request.json() as T;
+  } catch {
+    return badRequest('Invalid or missing JSON body');
+  }
+}
+
 export function badRequest(message: string, code?: string) {
   return apiError(message, 400, code);
 }

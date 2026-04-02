@@ -13,8 +13,8 @@ CREATE TABLE users (
   avatar_url TEXT,
   is_admin BOOLEAN NOT NULL DEFAULT FALSE,
   max_open_prompts INTEGER NOT NULL DEFAULT 2,
-  total_reps INTEGER NOT NULL DEFAULT 0,
-  total_laughs INTEGER NOT NULL DEFAULT 0,
+  total_reps INTEGER NOT NULL DEFAULT 0 CHECK (total_reps >= 0),
+  total_laughs INTEGER NOT NULL DEFAULT 0 CHECK (total_laughs >= 0),
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
@@ -27,8 +27,9 @@ CREATE TABLE prompts (
   is_system_generated BOOLEAN NOT NULL DEFAULT FALSE,
   opens_at TIMESTAMPTZ NOT NULL,
   closes_at TIMESTAMPTZ NOT NULL,
+  CONSTRAINT prompts_opens_before_closes CHECK (opens_at < closes_at),
   is_closed_processed BOOLEAN NOT NULL DEFAULT FALSE,
-  submission_count INTEGER NOT NULL DEFAULT 0,
+  submission_count INTEGER NOT NULL DEFAULT 0 CHECK (submission_count >= 0),
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
@@ -38,10 +39,10 @@ CREATE TABLE pitches (
   prompt_id UUID NOT NULL REFERENCES prompts(id) ON DELETE CASCADE,
   user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
   body TEXT NOT NULL CHECK (char_length(body) <= 1000),
-  laugh_count INTEGER NOT NULL DEFAULT 0,
-  smile_count INTEGER NOT NULL DEFAULT 0,
-  surprise_count INTEGER NOT NULL DEFAULT 0,
-  total_reaction_count INTEGER NOT NULL DEFAULT 0,
+  laugh_count INTEGER NOT NULL DEFAULT 0 CHECK (laugh_count >= 0),
+  smile_count INTEGER NOT NULL DEFAULT 0 CHECK (smile_count >= 0),
+  surprise_count INTEGER NOT NULL DEFAULT 0 CHECK (surprise_count >= 0),
+  total_reaction_count INTEGER NOT NULL DEFAULT 0 CHECK (total_reaction_count >= 0),
   rank INTEGER,
   is_revealed BOOLEAN NOT NULL DEFAULT FALSE,
   edited_at TIMESTAMPTZ,

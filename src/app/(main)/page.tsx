@@ -16,12 +16,20 @@ export default function OpenTopicsPage() {
   const pageSize = 20;
   const totalPages = Math.ceil(total / pageSize);
 
+  const [error, setError] = useState('');
+
   const loadPrompts = useCallback(async () => {
     setLoading(true);
-    const res = await fetch(`/api/prompts?status=open&page=${page}`);
-    const data = await res.json();
-    setPrompts(data.prompts ?? []);
-    setTotal(data.total ?? 0);
+    setError('');
+    try {
+      const res = await fetch(`/api/prompts?status=open&page=${page}`);
+      if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error ?? 'Failed to load');
+      const data = await res.json();
+      setPrompts(data.prompts ?? []);
+      setTotal(data.total ?? 0);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Failed to load');
+    }
     setLoading(false);
   }, [page]);
 
@@ -39,7 +47,9 @@ export default function OpenTopicsPage() {
         </button>
       </div>
 
-      {loading ? (
+      {error ? (
+        <p className="text-center text-red-600 py-12">{error}</p>
+      ) : loading ? (
         <div className="space-y-3">
           {[1, 2, 3].map((i) => (
             <div key={i} className="h-24 rounded-xl bg-gray-100 animate-pulse" />
