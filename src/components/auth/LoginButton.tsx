@@ -76,19 +76,25 @@ export function LoginButton() {
         </h2>
 
         <form onSubmit={handleSubmit} className="space-y-3">
+          <label htmlFor="auth-email" className="sr-only">Email</label>
           <input
+            id="auth-email"
             type="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             placeholder="Email"
+            autoComplete="email"
             required
             className="w-full rounded-lg border border-gray-300 px-4 py-2 text-gray-900 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none"
           />
+          <label htmlFor="auth-password" className="sr-only">Password</label>
           <input
+            id="auth-password"
             type="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             placeholder="Password"
+            autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
             required
             minLength={8}
             className="w-full rounded-lg border border-gray-300 px-4 py-2 text-gray-900 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none"

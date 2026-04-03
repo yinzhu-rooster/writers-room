@@ -7,6 +7,10 @@
     {
       "path": "/api/cron/close-prompts",
       "schedule": "*/5 * * * *"
+    },
+    {
+      "path": "/api/cron/ai-pitch",
+      "schedule": "0 14,15,16,17,18,19,20,21,22 * * *"
     }
   ]
 }

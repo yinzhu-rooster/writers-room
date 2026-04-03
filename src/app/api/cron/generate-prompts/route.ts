@@ -1,15 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { generatePrompts } from '@/lib/ai/prompt-generator';
-import { timingSafeEqual } from 'crypto';
-
-function verifyCronSecret(authHeader: string | null): boolean {
-  const secret = process.env.CRON_SECRET;
-  if (!secret || !authHeader) return false;
-  const expected = `Bearer ${secret}`;
-  if (expected.length !== authHeader.length) return false;
-  return timingSafeEqual(Buffer.from(expected), Buffer.from(authHeader));
-}
+import { verifyCronSecret } from '@/lib/cron-auth';
 
 export async function POST(request: NextRequest) {
   if (!verifyCronSecret(request.headers.get('authorization'))) {

@@ -42,14 +42,15 @@ export function ReactionBar({ pitchId, myReaction, onChange }: ReactionBarProps)
   };
 
   return (
-    <div className="flex items-center gap-1">
+    <div className="flex items-center gap-2" role="group" aria-label="Reactions">
       {REACTIONS.map((r) => (
         <button
           key={r.type}
           onClick={() => handleReact(r.type)}
           disabled={loading}
-          title={r.label}
-          className={`px-2.5 py-1 rounded-full text-sm transition-all ${
+          aria-label={r.label}
+          aria-pressed={current === r.type}
+          className={`min-w-[44px] min-h-[44px] flex items-center justify-center rounded-full text-lg transition-all ${
             current === r.type
               ? 'bg-indigo-100 scale-110'
               : 'bg-gray-50 hover:bg-gray-100'

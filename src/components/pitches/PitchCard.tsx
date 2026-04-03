@@ -22,6 +22,7 @@ export interface PitchData {
   total_reaction_count: number | null;
   rank: number | null;
   is_revealed: boolean;
+  is_ai: boolean;
   edit_deadline: string | null;
 }
 
@@ -68,7 +69,9 @@ export function PitchCard({ pitch, isOpen, onReactionChange, onEdit, onDelete }:
           <div className="relative" ref={actionsRef}>
             <button
               onClick={() => setShowActions(!showActions)}
-              className="text-gray-400 hover:text-gray-600 p-1"
+              aria-label="Pitch actions"
+              aria-expanded={showActions}
+              className="text-gray-400 hover:text-gray-600 min-w-[44px] min-h-[44px] flex items-center justify-center"
             >
               ...
             </button>
@@ -77,7 +80,7 @@ export function PitchCard({ pitch, isOpen, onReactionChange, onEdit, onDelete }:
                 {canEdit && (
                   <button
                     onClick={() => { onEdit?.(pitch.id, pitch.body); setShowActions(false); }}
-                    className="block w-full text-left px-3 py-2 text-sm hover:bg-gray-50"
+                    className="block w-full text-left px-3 py-3 text-sm hover:bg-gray-50"
                   >
                     Edit
                   </button>
@@ -85,7 +88,7 @@ export function PitchCard({ pitch, isOpen, onReactionChange, onEdit, onDelete }:
                 {canDelete && (
                   <button
                     onClick={() => { onDelete?.(pitch.id); setShowActions(false); }}
-                    className="block w-full text-left px-3 py-2 text-sm text-red-600 hover:bg-gray-50"
+                    className="block w-full text-left px-3 py-3 text-sm text-red-600 hover:bg-gray-50"
                   >
                     Delete
                   </button>

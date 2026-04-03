@@ -6,6 +6,8 @@ import { CountdownTimer } from '@/components/prompts/CountdownTimer';
 import { PitchList } from '@/components/pitches/PitchList';
 import { PitchInput } from '@/components/pitches/PitchInput';
 import { useUser } from '@/hooks/useUser';
+import { LoadingSkeleton } from '@/components/ui/LoadingSkeleton';
+import { EmptyState } from '@/components/ui/EmptyState';
 import type { Prompt } from '@/types/database';
 
 export default function PromptDetailPage() {
@@ -31,33 +33,36 @@ export default function PromptDetailPage() {
     return () => clearInterval(interval);
   }, [loadPrompt]);
 
-  if (loading) return <div className="h-32 rounded-xl bg-gray-100 animate-pulse" />;
-  if (!prompt) return <p className="text-center text-gray-500 py-12">Prompt not found</p>;
+  if (loading) return <LoadingSkeleton count={1} height="h-32" />;
+  if (!prompt) return <EmptyState message="Prompt not found" />;
 
   const isOpen = new Date(prompt.closes_at) > new Date();
 
   return (
-    <div>
-      <div className="mb-6">
-        <div className="flex items-center gap-2 mb-2">
+    <div className="flex flex-col h-[calc(100vh-3.5rem-6rem)] md:h-[calc(100vh-3.5rem-1.5rem)]">
+      {/* Sticky top: prompt title only */}
+      <div className="shrink-0 border-b border-gray-100 pb-3 mb-4">
+        <div className="flex items-center gap-2 mb-1">
           {isOpen ? (
             <CountdownTimer closesAt={prompt.closes_at} onExpired={loadPrompt} />
           ) : (
             <span className="text-sm text-gray-400">Closed</span>
           )}
+          <span className="text-sm text-gray-400">{prompt.submission_count} pitches</span>
         </div>
         <h1 className="text-xl font-bold text-gray-900">{prompt.body}</h1>
-        <p className="text-sm text-gray-500 mt-1">{prompt.submission_count} pitches</p>
       </div>
 
-      {isOpen && authUser && (
-        <PitchInput
-          promptId={prompt.id}
-          onSubmitted={() => setRefreshKey((k) => k + 1)}
-        />
-      )}
-
-      <PitchList promptId={prompt.id} isOpen={isOpen} refreshKey={refreshKey} />
+      {/* Scrollable: input + pitch list */}
+      <div className="flex-1 overflow-y-auto min-h-0">
+        {isOpen && authUser && (
+          <PitchInput
+            promptId={prompt.id}
+            onSubmitted={() => setRefreshKey((k) => k + 1)}
+          />
+        )}
+        <PitchList promptId={prompt.id} isOpen={isOpen} refreshKey={refreshKey} />
+      </div>
     </div>
   );
 }

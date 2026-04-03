@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { FlagReasonPicker } from './FlagReasonPicker';
+import { useToast } from '@/components/ui/ToastProvider';
 import type { FlagReason } from '@/types/enums';
 
 interface FlagButtonProps {
@@ -12,6 +13,7 @@ interface FlagButtonProps {
 export function FlagButton({ type, targetId }: FlagButtonProps) {
   const [showPicker, setShowPicker] = useState(false);
   const [flagged, setFlagged] = useState(false);
+  const { showToast } = useToast();
 
   const handleFlag = async (reason: FlagReason) => {
     const url = type === 'pitch'
@@ -26,6 +28,7 @@ export function FlagButton({ type, targetId }: FlagButtonProps) {
 
     if (res.ok || res.status === 409) {
       setFlagged(true);
+      showToast('Content flagged for review');
     }
     setShowPicker(false);
   };

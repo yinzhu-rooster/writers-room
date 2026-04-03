@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useFocusTrap } from '@/hooks/useFocusTrap';
+import { useToast } from '@/components/ui/ToastProvider';
 
 interface CreatePromptModalProps {
   open: boolean;
@@ -16,6 +17,7 @@ export function CreatePromptModal({ open, onClose, onCreated }: CreatePromptModa
   const [loading, setLoading] = useState(false);
 
   const trapRef = useFocusTrap<HTMLDivElement>();
+  const { showToast } = useToast();
 
   const handleEscape = useCallback((e: KeyboardEvent) => {
     if (e.key === 'Escape') onClose();
@@ -56,6 +58,7 @@ export function CreatePromptModal({ open, onClose, onCreated }: CreatePromptModa
     setDurationHours(24);
     setError('');
     setLoading(false);
+    showToast('Prompt created!');
     onCreated();
     onClose();
   };

@@ -4,6 +4,8 @@ import { useEffect, useState, useCallback } from 'react';
 import { PromptCard } from '@/components/prompts/PromptCard';
 import { CreatePromptModal } from '@/components/prompts/CreatePromptModal';
 import { Pagination } from '@/components/ui/Pagination';
+import { LoadingSkeleton } from '@/components/ui/LoadingSkeleton';
+import { EmptyState } from '@/components/ui/EmptyState';
 import type { Prompt } from '@/types/database';
 
 export default function OpenTopicsPage() {
@@ -50,13 +52,9 @@ export default function OpenTopicsPage() {
       {error ? (
         <p className="text-center text-red-600 py-12">{error}</p>
       ) : loading ? (
-        <div className="space-y-3">
-          {[1, 2, 3].map((i) => (
-            <div key={i} className="h-24 rounded-xl bg-gray-100 animate-pulse" />
-          ))}
-        </div>
+        <LoadingSkeleton count={3} height="h-24" />
       ) : prompts.length === 0 ? (
-        <p className="text-center text-gray-500 py-12">No open topics right now</p>
+        <EmptyState message="No open topics right now" action={{ label: 'Create one', onClick: () => setShowCreate(true) }} />
       ) : (
         <div className="space-y-3">
           {prompts.map((p) => (

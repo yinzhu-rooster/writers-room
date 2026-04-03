@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useFocusTrap } from '@/hooks/useFocusTrap';
+import { useToast } from '@/components/ui/ToastProvider';
 
 interface PitchEditModalProps {
   pitchId: string;
@@ -16,6 +17,7 @@ export function PitchEditModal({ pitchId, initialBody, onClose, onSaved }: Pitch
   const [loading, setLoading] = useState(false);
 
   const trapRef = useFocusTrap<HTMLDivElement>();
+  const { showToast } = useToast();
 
   const handleEscape = useCallback((e: KeyboardEvent) => {
     if (e.key === 'Escape') onClose();
@@ -44,6 +46,7 @@ export function PitchEditModal({ pitchId, initialBody, onClose, onSaved }: Pitch
       return;
     }
 
+    showToast('Pitch updated');
     onSaved();
     onClose();
   };

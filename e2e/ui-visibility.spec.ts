@@ -5,7 +5,7 @@ test.describe('UI visibility checks', () => {
     await page.goto('/closed');
 
     await expect(page.getByText('Writers Room')).toBeVisible();
-    await expect(page.getByText('Closed Topics')).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Closed Topics' })).toBeVisible();
     await expect(page.getByRole('button', { name: 'Sign In' })).toBeVisible();
   });
 

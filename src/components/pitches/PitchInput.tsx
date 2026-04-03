@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useToast } from '@/components/ui/ToastProvider';
 
 interface PitchInputProps {
   promptId: string;
@@ -11,6 +12,7 @@ export function PitchInput({ promptId, onSubmitted }: PitchInputProps) {
   const [body, setBody] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const { showToast } = useToast();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -28,12 +30,14 @@ export function PitchInput({ promptId, onSubmitted }: PitchInputProps) {
     const data = await res.json();
     if (!res.ok) {
       setError(data.error);
+      showToast(data.error, 'error');
       setLoading(false);
       return;
     }
 
     setBody('');
     setLoading(false);
+    showToast('Pitch submitted!');
     onSubmitted();
   };
 

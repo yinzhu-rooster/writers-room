@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { LoadingSkeleton } from '@/components/ui/LoadingSkeleton';
 
 interface PitchFlagEntry {
   id: string;
@@ -38,7 +39,7 @@ export default function AdminFlagsPage() {
       .catch((e) => { setError(e.message); setLoading(false); });
   }, []);
 
-  if (loading) return <div className="h-32 bg-gray-100 animate-pulse rounded-lg" />;
+  if (loading) return <LoadingSkeleton count={2} height="h-16" />;
   if (error) return <p className="text-red-600">{error}</p>;
 
   return (

@@ -19,6 +19,7 @@ interface SerializeOptions {
   currentUserId: string | null;
   isOpen: boolean;
   closesAt: string;
+  minReactionsForReveal?: number;
 }
 
 export function serializePitch(pitch: RawPitch, opts: SerializeOptions) {
@@ -49,10 +50,12 @@ export function serializePitch(pitch: RawPitch, opts: SerializeOptions) {
       )
     ).toISOString();
 
+    const openUser = pitch.users as { is_ai?: boolean } | null;
     return {
       ...base,
       user_id: isOwn ? pitch.user_id : null,
       username: null,
+      is_ai: openUser?.is_ai ?? false,
       laugh_count: null,
       smile_count: null,
       surprise_count: null,
@@ -63,11 +66,13 @@ export function serializePitch(pitch: RawPitch, opts: SerializeOptions) {
     };
   }
 
-  const pitchUser = pitch.users as { username: string } | null;
+  const pitchUser = pitch.users as { username: string; is_ai?: boolean } | null;
+  const showByline = isOwn || pitch.total_reaction_count >= (opts.minReactionsForReveal ?? 3);
   return {
     ...base,
-    user_id: pitch.is_revealed || isOwn ? pitch.user_id : null,
-    username: pitch.is_revealed || isOwn ? pitchUser?.username ?? null : null,
+    user_id: showByline ? pitch.user_id : null,
+    username: showByline ? pitchUser?.username ?? null : null,
+    is_ai: pitchUser?.is_ai ?? false,
     laugh_count: pitch.laugh_count,
     smile_count: pitch.smile_count,
     surprise_count: pitch.surprise_count,

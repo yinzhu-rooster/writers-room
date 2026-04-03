@@ -6,6 +6,7 @@ export interface User {
   email: string;
   avatar_url: string | null;
   is_admin: boolean;
+  is_ai: boolean;
   max_open_prompts: number;
   total_reps: number;
   total_laughs: number;

@@ -3,12 +3,13 @@ import { createClient } from '@/lib/supabase/server';
 import { createPromptSchema } from '@/lib/validators/prompt';
 import { badRequest, unauthorized, safeJson } from '@/lib/api-error';
 
-const PAGE_SIZE = 20;
+const PAGE_SIZE = 100;
 
 export async function GET(request: NextRequest) {
   const supabase = await createClient();
   const { searchParams } = new URL(request.url);
   const status = searchParams.get('status') ?? 'open';
+  const sort = searchParams.get('sort') ?? 'newest';
   const page = Math.max(1, parseInt(searchParams.get('page') ?? '1', 10));
   const offset = (page - 1) * PAGE_SIZE;
 
@@ -24,7 +25,15 @@ export async function GET(request: NextRequest) {
     query = query.order('closes_at', { ascending: true });
   } else {
     query = query.lte('closes_at', now);
-    query = query.order('closes_at', { ascending: false });
+    // Sort options for closed: newest (default), oldest, most_pitches
+    // most_reactions is handled client-side after stats are fetched
+    if (sort === 'oldest') {
+      query = query.order('closes_at', { ascending: true });
+    } else if (sort === 'most_pitches') {
+      query = query.order('submission_count', { ascending: false });
+    } else {
+      query = query.order('closes_at', { ascending: false });
+    }
   }
 
   query = query.range(offset, offset + PAGE_SIZE - 1);
@@ -33,14 +42,37 @@ export async function GET(request: NextRequest) {
 
   if (error) return badRequest('Failed to load prompts');
 
-  // Anonymize creator on open prompts
+  // For closed prompts, fetch stats (unique writers + total reactions) via RPC
+  const statsMap = new Map<string, { unique_writers: number; total_reactions: number }>();
+  if (status === 'closed' && prompts?.length) {
+    const promptIds = prompts.map(p => p.id);
+    const { data: statsData } = await supabase.rpc('get_prompt_stats', {
+      prompt_ids: promptIds,
+    });
+    if (statsData) {
+      for (const row of statsData) {
+        statsMap.set(row.prompt_id, {
+          unique_writers: Number(row.unique_writers),
+          total_reactions: Number(row.total_reactions),
+        });
+      }
+    }
+  }
+
+  // Anonymize creator on open prompts, attach stats
   const serialized = (prompts ?? []).map((p) => {
     const isOpen = new Date(p.closes_at) > new Date();
+    const stats = statsMap.get(p.id) ?? { unique_writers: 0, total_reactions: 0 };
     if (isOpen && p.created_by !== user?.id) {
-      return { ...p, created_by: null };
+      return { ...p, created_by: null, unique_writers: 0, total_reactions: 0 };
     }
-    return p;
+    return { ...p, unique_writers: stats.unique_writers, total_reactions: stats.total_reactions };
   });
+
+  // Sort by most_reactions client-side (DB doesn't have this column)
+  if (status === 'closed' && sort === 'most_reactions') {
+    serialized.sort((a, b) => b.total_reactions - a.total_reactions);
+  }
 
   return NextResponse.json({
     prompts: serialized,

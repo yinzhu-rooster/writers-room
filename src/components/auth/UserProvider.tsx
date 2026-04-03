@@ -23,28 +23,42 @@ export function UserProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const supabase = createClient();
-
-    async function loadUser() {
-      try {
-        const { data: { user } } = await supabase.auth.getUser();
-        setAuthUser(user);
-
-        if (user) {
-          const { data } = await supabase
-            .from('users')
-            .select('*')
-            .eq('id', user.id)
-            .single();
-          setProfile(data);
-        }
-      } catch {
-        // Auth check failed — treat as logged out
-      }
+    let supabase: ReturnType<typeof createClient>;
+    try {
+      supabase = createClient();
+    } catch {
       setLoading(false);
+      return;
     }
 
-    loadUser();
+    async function loadUser() {
+      const { data, error } = await supabase.auth.getUser();
+      const user = data?.user ?? null;
+
+      if (error || !user) {
+        // Clear stale cookies so middleware stops thinking we're authed
+        await supabase.auth.signOut({ scope: 'local' }).catch(() => {});
+        return;
+      }
+
+      setAuthUser(user);
+
+      const { data: profileData } = await supabase
+        .from('users')
+        .select('*')
+        .eq('id', user.id)
+        .single();
+
+      if (profileData) {
+        setProfile(profileData);
+      } else {
+        // Auth user exists but no profile row — clear session
+        await supabase.auth.signOut({ scope: 'local' }).catch(() => {});
+        setAuthUser(null);
+      }
+    }
+
+    loadUser().finally(() => setLoading(false));
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (_event, session) => {

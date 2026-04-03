@@ -4,7 +4,7 @@ test.describe('Auth flow', () => {
   test('visitor lands on /closed', async ({ page }) => {
     await page.goto('/');
     await expect(page).toHaveURL(/\/closed/);
-    await expect(page.getByText('Closed Topics')).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Closed Topics' })).toBeVisible();
   });
 
   test('sign in button is visible in header', async ({ page }) => {

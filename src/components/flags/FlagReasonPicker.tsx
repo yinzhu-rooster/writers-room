@@ -16,13 +16,14 @@ interface FlagReasonPickerProps {
 export function FlagReasonPicker({ onSelect, onClose }: FlagReasonPickerProps) {
   return (
     <>
-      <div className="fixed inset-0 z-40" onClick={onClose} />
-      <div className="absolute right-0 bottom-full mb-1 w-36 bg-white border border-gray-200 rounded-lg shadow-lg z-50">
+      <div className="fixed inset-0 z-40" onClick={onClose} aria-hidden="true" />
+      <div role="menu" aria-label="Flag reason" className="absolute right-0 bottom-full mb-1 w-36 bg-white border border-gray-200 rounded-lg shadow-lg z-50">
         {REASONS.map((r) => (
           <button
             key={r.value}
+            role="menuitem"
             onClick={() => onSelect(r.value)}
-            className="block w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 first:rounded-t-lg last:rounded-b-lg"
+            className="block w-full text-left px-3 py-3 text-sm text-gray-700 hover:bg-gray-50 first:rounded-t-lg last:rounded-b-lg"
           >
             {r.label}
           </button>

@@ -2,6 +2,8 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import { Pagination } from '@/components/ui/Pagination';
+import { LoadingSkeleton } from '@/components/ui/LoadingSkeleton';
+import { EmptyState } from '@/components/ui/EmptyState';
 
 type SortMode = 'total_laughs' | 'avg_laughs' | 'total_reps' | 'top3_pct';
 
@@ -64,12 +66,14 @@ export default function LeaderboardPage() {
     <div>
       <h1 className="text-xl font-bold text-gray-900 mb-4">Leaderboard</h1>
 
-      <div className="flex gap-2 mb-4 overflow-x-auto">
+      <div className="flex gap-2 mb-4 overflow-x-auto pb-1 -mb-1" role="tablist" aria-label="Sort by">
         {SORT_OPTIONS.map((opt) => (
           <button
             key={opt.value}
+            role="tab"
+            aria-selected={sort === opt.value}
             onClick={() => { setSort(opt.value); setPage(1); }}
-            className={`px-3 py-1.5 text-sm rounded-full whitespace-nowrap transition-colors ${
+            className={`px-4 py-2 text-sm rounded-full whitespace-nowrap transition-colors ${
               sort === opt.value
                 ? 'bg-indigo-600 text-white'
                 : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
@@ -83,9 +87,9 @@ export default function LeaderboardPage() {
       {error ? (
         <p className="text-center text-red-600 py-12">{error}</p>
       ) : loading ? (
-        <div className="space-y-2">{[1, 2, 3, 4, 5].map((i) => <div key={i} className="h-12 rounded-lg bg-gray-100 animate-pulse" />)}</div>
+        <LoadingSkeleton count={5} height="h-12" />
       ) : entries.length === 0 ? (
-        <p className="text-center text-gray-500 py-12">No data yet</p>
+        <EmptyState message="No data yet" />
       ) : (
         <div className="space-y-1">
           {entries.map((entry, i) => (

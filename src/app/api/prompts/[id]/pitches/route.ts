@@ -6,7 +6,7 @@ import { getConfigInt } from '@/lib/config';
 import { serializePitch } from '@/lib/serialize-pitch';
 import { hashSeed, seededShuffle } from '@/lib/shuffle';
 
-const PAGE_SIZE = 20;
+const PAGE_SIZE = 100;
 
 export async function GET(
   request: NextRequest,
@@ -32,22 +32,32 @@ export async function GET(
 
   let query = supabase
     .from('pitches')
-    .select('*, users!inner(username), reactions!left(reaction_type, user_id)', { count: 'exact' })
+    .select('*, users!inner(username, is_ai), reactions!left(reaction_type, user_id)', { count: 'exact' })
     .eq('prompt_id', promptId)
     .is('deleted_at', null);
 
-  query = query
-    .order('created_at', { ascending: true })
-    .range(offset, offset + PAGE_SIZE - 1);
+  if (isOpen) {
+    query = query.order('created_at', { ascending: true });
+  } else {
+    query = query.order('laugh_count', { ascending: false });
+  }
+
+  query = query.range(offset, offset + PAGE_SIZE - 1);
 
   const { data: pitches, count, error } = await query;
-  if (error) return badRequest('Failed to load pitches');
+  if (error) {
+    console.error('Pitches load error:', error.message, error.details, error.code);
+    return badRequest('Failed to load pitches');
+  }
+
+  const minReactionsForReveal = isOpen ? 0 : await getConfigInt('min_reactions_for_reveal');
 
   const serialized = (pitches ?? []).map((pitch) =>
     serializePitch(pitch as never, {
       currentUserId: user?.id ?? null,
       isOpen,
       closesAt: prompt.closes_at,
+      minReactionsForReveal,
     })
   );
 
@@ -117,7 +127,10 @@ export async function POST(
     .select()
     .single();
 
-  if (error) return badRequest('Failed to create pitch');
+  if (error) {
+    console.error('Pitch insert error:', error.message, error.details, error.code);
+    return badRequest(error.message);
+  }
 
   return NextResponse.json(pitch, { status: 201 });
 }
