@@ -22,11 +22,19 @@ export function PitchList({ promptId, isOpen, refreshKey }: PitchListProps) {
   const [editingPitch, setEditingPitch] = useState<{ id: string; body: string } | null>(null);
   const { showToast } = useToast();
   const sentinelRef = useRef<HTMLDivElement>(null);
+  const abortRef = useRef<AbortController | null>(null);
 
   const loadPage = useCallback(async (pageNum: number, append: boolean) => {
+    // Abort any in-flight request to prevent race conditions
+    abortRef.current?.abort();
+    const controller = new AbortController();
+    abortRef.current = controller;
+
     if (append) setLoadingMore(true); else setLoading(true);
     try {
-      const res = await fetch(`/api/prompts/${promptId}/pitches?page=${pageNum}`);
+      const res = await fetch(`/api/prompts/${promptId}/pitches?page=${pageNum}`, {
+        signal: controller.signal,
+      });
       if (!res.ok) throw new Error('Failed to load');
       const data = await res.json();
       const newPitches = data.pitches ?? [];
@@ -38,6 +46,7 @@ export function PitchList({ promptId, isOpen, refreshKey }: PitchListProps) {
       }
       setHasMore(pageNum * (data.page_size ?? 100) < total);
     } catch (err) {
+      if (err instanceof DOMException && err.name === 'AbortError') return;
       console.error('Failed to load pitches:', err);
     }
     setLoading(false);
@@ -56,6 +65,14 @@ export function PitchList({ promptId, isOpen, refreshKey }: PitchListProps) {
     if (page > 1) loadPage(page, true);
   }, [page, loadPage]);
 
+  // Use refs for intersection observer to avoid stale closures
+  const hasMoreRef = useRef(hasMore);
+  const loadingMoreRef = useRef(loadingMore);
+  const loadingRef = useRef(loading);
+  hasMoreRef.current = hasMore;
+  loadingMoreRef.current = loadingMore;
+  loadingRef.current = loading;
+
   // Intersection observer for infinite scroll
   useEffect(() => {
     const sentinel = sentinelRef.current;
@@ -63,7 +80,7 @@ export function PitchList({ promptId, isOpen, refreshKey }: PitchListProps) {
 
     const observer = new IntersectionObserver(
       (entries) => {
-        if (entries[0].isIntersecting && hasMore && !loadingMore && !loading) {
+        if (entries[0].isIntersecting && hasMoreRef.current && !loadingMoreRef.current && !loadingRef.current) {
           setPage(p => p + 1);
         }
       },
@@ -72,7 +89,7 @@ export function PitchList({ promptId, isOpen, refreshKey }: PitchListProps) {
 
     observer.observe(sentinel);
     return () => observer.disconnect();
-  }, [hasMore, loadingMore, loading]);
+  }, []);
 
   const handleDelete = async (pitchId: string) => {
     if (!window.confirm('Delete this pitch? This cannot be undone.')) return;

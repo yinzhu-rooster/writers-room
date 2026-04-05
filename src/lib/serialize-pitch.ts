@@ -1,19 +1,6 @@
-interface RawPitch {
-  id: string;
-  prompt_id: string;
-  body: string;
-  user_id: string;
-  created_at: string;
-  edited_at: string | null;
-  laugh_count: number;
-  smile_count: number;
-  surprise_count: number;
-  total_reaction_count: number;
-  rank: number | null;
-  is_revealed: boolean;
-  users: unknown;
-  reactions: unknown;
-}
+import type { PitchWithRelations } from '@/types/database';
+
+type RawPitch = PitchWithRelations;
 
 interface SerializeOptions {
   currentUserId: string | null;
@@ -27,9 +14,7 @@ export function serializePitch(pitch: RawPitch, opts: SerializeOptions) {
   const isOwn = currentUserId === pitch.user_id;
 
   const myReaction = currentUserId
-    ? (pitch.reactions as { reaction_type: string; user_id: string }[])?.find(
-        (r) => r.user_id === currentUserId
-      )?.reaction_type ?? null
+    ? pitch.reactions?.find((r) => r.user_id === currentUserId)?.reaction_type ?? null
     : null;
 
   const base = {
@@ -50,7 +35,7 @@ export function serializePitch(pitch: RawPitch, opts: SerializeOptions) {
       )
     ).toISOString();
 
-    const openUser = pitch.users as { is_ai?: boolean } | null;
+    const openUser = pitch.users;
     return {
       ...base,
       user_id: isOwn ? pitch.user_id : null,
@@ -66,7 +51,7 @@ export function serializePitch(pitch: RawPitch, opts: SerializeOptions) {
     };
   }
 
-  const pitchUser = pitch.users as { username: string; is_ai?: boolean } | null;
+  const pitchUser = pitch.users;
   const showByline = isOwn || pitch.total_reaction_count >= (opts.minReactionsForReveal ?? 3);
   return {
     ...base,

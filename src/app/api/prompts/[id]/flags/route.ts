@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
-import { badRequest, unauthorized, conflict, safeJson } from '@/lib/api-error';
+import { badRequest, notFound, unauthorized, conflict, safeJson } from '@/lib/api-error';
 
 export async function POST(
   request: NextRequest,
@@ -25,7 +25,7 @@ export async function POST(
     .eq('id', promptId)
     .single();
 
-  if (!prompt) return badRequest('Prompt not found');
+  if (!prompt) return notFound('Prompt not found');
   if (new Date(prompt.closes_at) <= new Date()) {
     return badRequest('Cannot flag closed prompts');
   }

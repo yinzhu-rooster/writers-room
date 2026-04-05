@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
-import { badRequest, unauthorized, forbidden, safeJson } from '@/lib/api-error';
+import { badRequest, notFound, unauthorized, forbidden, safeJson } from '@/lib/api-error';
 
 export async function POST(
   request: NextRequest,
@@ -26,15 +26,17 @@ export async function POST(
     .is('deleted_at', null)
     .single();
 
-  if (!pitch) return badRequest('Pitch not found');
+  if (!pitch) return notFound('Pitch not found');
   if (pitch.user_id === user.id) return forbidden('Cannot react to your own pitch');
 
-  const prompt = pitch.prompts as unknown as { closes_at: string };
+  const prompts = pitch.prompts as unknown as { closes_at: string } | { closes_at: string }[];
+  const prompt = Array.isArray(prompts) ? prompts[0] : prompts;
   if (new Date(prompt.closes_at) <= new Date()) {
     return badRequest('This prompt is closed', 'PROMPT_CLOSED');
   }
 
-  // Upsert reaction — use DB upsert to avoid race conditions
+  // Use upsert for the entire operation to avoid race conditions
+  // First, check if toggling off (same reaction type means remove)
   const { data: existing } = await supabase
     .from('reactions')
     .select('id, reaction_type')
@@ -42,35 +44,25 @@ export async function POST(
     .eq('user_id', user.id)
     .maybeSingle();
 
-  if (existing) {
-    if (existing.reaction_type === reaction_type) {
-      // Toggle off — same reaction means remove
-      await supabase.from('reactions').delete().eq('id', existing.id);
-      return NextResponse.json({ reaction: null });
-    } else {
-      // Change reaction type
-      const { data: updated } = await supabase
-        .from('reactions')
-        .update({ reaction_type, updated_at: new Date().toISOString() })
-        .eq('id', existing.id)
-        .select()
-        .single();
-      return NextResponse.json({ reaction: updated });
-    }
-  } else {
-    // Insert new — use onConflict to handle race with concurrent request
-    const { data: created, error } = await supabase
-      .from('reactions')
-      .upsert(
-        { pitch_id: pitchId, user_id: user.id, reaction_type },
-        { onConflict: 'pitch_id,user_id' }
-      )
-      .select()
-      .single();
-
-    if (error) return badRequest('Failed to save reaction');
-    return NextResponse.json({ reaction: created }, { status: 201 });
+  if (existing?.reaction_type === reaction_type) {
+    // Toggle off — same reaction means remove
+    const { error: delError } = await supabase.from('reactions').delete().eq('id', existing.id);
+    if (delError) return badRequest('Failed to remove reaction');
+    return NextResponse.json({ reaction: null });
   }
+
+  // Upsert handles both new reactions and reaction type changes atomically
+  const { data: upserted, error } = await supabase
+    .from('reactions')
+    .upsert(
+      { pitch_id: pitchId, user_id: user.id, reaction_type },
+      { onConflict: 'pitch_id,user_id' }
+    )
+    .select()
+    .single();
+
+  if (error) return badRequest('Failed to save reaction');
+  return NextResponse.json({ reaction: upserted }, { status: existing ? 200 : 201 });
 }
 
 export async function DELETE(

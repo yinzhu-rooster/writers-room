@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
-import { notFound, unauthorized } from '@/lib/api-error';
+import { forbidden, notFound, unauthorized } from '@/lib/api-error';
 
 export async function GET(
   _request: NextRequest,
@@ -10,6 +10,7 @@ export async function GET(
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return unauthorized();
+  if (user.id !== id) return forbidden('You can only view your own stats');
 
   // Get user profile
   const { data: profileUser } = await supabase

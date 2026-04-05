@@ -6,8 +6,14 @@ export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url);
   const code = searchParams.get('code');
   const rawNext = searchParams.get('next') ?? '/';
-  // Prevent open redirect: only allow relative paths, no protocol-relative URLs
-  const next = rawNext.startsWith('/') && !rawNext.startsWith('//') ? rawNext : '/';
+  // Prevent open redirect: validate the redirect stays on the same origin
+  let next = '/';
+  try {
+    const resolved = new URL(rawNext, origin);
+    if (resolved.origin === origin) next = resolved.pathname + resolved.search + resolved.hash;
+  } catch {
+    // Invalid URL — fall back to /
+  }
 
   if (code) {
     const cookieStore = await cookies();

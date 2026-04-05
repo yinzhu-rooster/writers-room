@@ -1,15 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { rankPitches } from '@/lib/ranking';
-import { timingSafeEqual } from 'crypto';
-
-function verifyCronSecret(authHeader: string | null): boolean {
-  const secret = process.env.CRON_SECRET;
-  if (!secret || !authHeader) return false;
-  const expected = `Bearer ${secret}`;
-  if (expected.length !== authHeader.length) return false;
-  return timingSafeEqual(Buffer.from(expected), Buffer.from(authHeader));
-}
+import { verifyCronSecret } from '@/lib/cron-auth';
 
 export async function POST(request: NextRequest) {
   if (!verifyCronSecret(request.headers.get('authorization'))) {
@@ -55,13 +47,16 @@ export async function POST(request: NextRequest) {
       // Update each pitch with rank and reveal status
       for (const rp of ranked) {
         const pitch = pitches.find((p) => p.id === rp.id)!;
-        await supabase
+        const { error: updateError } = await supabase
           .from('pitches')
           .update({
             rank: rp.rank,
             is_revealed: pitch.total_reaction_count >= threshold,
           })
           .eq('id', rp.id);
+        if (updateError) {
+          console.error(`Failed to update pitch ${rp.id}:`, updateError.message);
+        }
       }
     }
 

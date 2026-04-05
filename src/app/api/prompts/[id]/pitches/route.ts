@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { createPitchSchema } from '@/lib/validators/pitch';
-import { badRequest, unauthorized, safeJson } from '@/lib/api-error';
+import { badRequest, notFound, unauthorized, safeJson } from '@/lib/api-error';
 import { getConfigInt } from '@/lib/config';
 import { serializePitch } from '@/lib/serialize-pitch';
+import type { PitchWithRelations } from '@/types/database';
 
 
 const PAGE_SIZE = 100;
@@ -26,7 +27,7 @@ export async function GET(
     .eq('id', promptId)
     .single();
 
-  if (!prompt) return badRequest('Prompt not found');
+  if (!prompt) return notFound('Prompt not found');
 
   const isOpen = new Date(prompt.closes_at) > new Date();
 
@@ -53,7 +54,7 @@ export async function GET(
   const minReactionsForReveal = isOpen ? 0 : await getConfigInt('min_reactions_for_reveal');
 
   const serialized = (pitches ?? []).map((pitch) =>
-    serializePitch(pitch as never, {
+    serializePitch(pitch as PitchWithRelations, {
       currentUserId: user?.id ?? null,
       isOpen,
       closesAt: prompt.closes_at,
@@ -90,7 +91,7 @@ export async function POST(
     .eq('id', promptId)
     .single();
 
-  if (!prompt) return badRequest('Prompt not found');
+  if (!prompt) return notFound('Prompt not found');
   if (new Date(prompt.closes_at) <= new Date()) {
     return badRequest('This prompt is closed', 'PROMPT_CLOSED');
   }

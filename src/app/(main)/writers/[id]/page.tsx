@@ -60,7 +60,7 @@ export default function WriterProfilePage() {
           <img src={user.avatar_url} alt={user.username} className="h-16 w-16 rounded-full" />
         ) : (
           <div className="h-16 w-16 rounded-full bg-indigo-500 flex items-center justify-center text-white text-2xl font-bold shrink-0">
-            {user.username[0].toUpperCase()}
+            {user.username?.[0]?.toUpperCase() ?? 'U'}
           </div>
         )}
         <div>

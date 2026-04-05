@@ -64,11 +64,14 @@ export function UserProvider({ children }: { children: ReactNode }) {
       async (_event, session) => {
         setAuthUser(session?.user ?? null);
         if (session?.user) {
-          const { data } = await supabase
+          const { data, error: profileError } = await supabase
             .from('users')
             .select('*')
             .eq('id', session.user.id)
             .single();
+          if (profileError) {
+            console.error('Failed to load profile on auth change:', profileError.message);
+          }
           setProfile(data);
         } else {
           setProfile(null);

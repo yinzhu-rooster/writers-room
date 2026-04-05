@@ -20,5 +20,10 @@ export async function getConfigValue(key: string): Promise<string> {
 
 export async function getConfigInt(key: string): Promise<number> {
   const value = await getConfigValue(key);
-  return parseInt(value, 10);
+  const num = parseInt(value, 10);
+  if (isNaN(num)) {
+    const fallback = CONFIG_DEFAULTS[key];
+    return fallback ? parseInt(fallback, 10) : 0;
+  }
+  return num;
 }

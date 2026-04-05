@@ -1,7 +1,8 @@
 import { describe, it, expect } from 'vitest';
 import { serializePitch } from './serialize-pitch';
+import type { PitchWithRelations } from '@/types/database';
 
-function makePitch(overrides: Record<string, unknown> = {}) {
+function makePitch(overrides: Partial<PitchWithRelations> = {}): PitchWithRelations {
   return {
     id: 'pitch-1',
     prompt_id: 'prompt-1',
@@ -9,6 +10,8 @@ function makePitch(overrides: Record<string, unknown> = {}) {
     user_id: 'user-1',
     created_at: '2026-01-01T12:00:00Z',
     edited_at: null,
+    deleted_at: null,
+    updated_at: '2026-01-01T12:00:00Z',
     laugh_count: 5,
     smile_count: 2,
     surprise_count: 1,
@@ -97,8 +100,8 @@ describe('serializePitch', () => {
       expect(result.user_id).toBe('user-1');
     });
 
-    it('hides author when not revealed and not own', () => {
-      const result = serializePitch(makePitch({ is_revealed: false }), opts);
+    it('hides author when below reveal threshold and not own', () => {
+      const result = serializePitch(makePitch({ is_revealed: false, total_reaction_count: 0 }), opts);
       expect(result.username).toBeNull();
       expect(result.user_id).toBeNull();
     });

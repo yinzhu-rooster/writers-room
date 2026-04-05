@@ -43,6 +43,13 @@ export interface Pitch {
   updated_at: string;
 }
 
+/** Pitch row with joined relations from Supabase select queries */
+export interface PitchWithRelations extends Pitch {
+  users: { username: string; is_ai?: boolean } | null;
+  reactions: { reaction_type: string; user_id: string }[];
+  prompts?: { closes_at: string };
+}
+
 export interface Reaction {
   id: string;
   pitch_id: string;

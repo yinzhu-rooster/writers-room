@@ -29,6 +29,8 @@ export function FlagButton({ type, targetId }: FlagButtonProps) {
     if (res.ok || res.status === 409) {
       setFlagged(true);
       showToast('Content flagged for review');
+    } else {
+      showToast('Failed to flag content', 'error');
     }
     setShowPicker(false);
   };

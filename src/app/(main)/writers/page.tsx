@@ -43,8 +43,9 @@ export default function WritersPage() {
         setWriters(newWriters);
       }
       setHasMore(pageNum * (data.page_size ?? 100) < total);
-    } catch {
-      // ignore
+    } catch (err) {
+      if (err instanceof DOMException && err.name === 'AbortError') return;
+      console.error('Failed to load writers:', err);
     }
     if (append) setLoadingMore(false); else setLoading(false);
   }, []);
@@ -111,7 +112,7 @@ export default function WritersPage() {
                 <img src={w.avatar_url} alt={w.username} className="h-9 w-9 rounded-full" />
               ) : (
                 <div className="h-9 w-9 rounded-full bg-indigo-500 flex items-center justify-center text-white text-sm font-medium shrink-0">
-                  {w.username[0].toUpperCase()}
+                  {w.username?.[0]?.toUpperCase() ?? 'U'}
                 </div>
               )}
               <div className="flex-1 min-w-0">

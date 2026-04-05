@@ -17,9 +17,9 @@ export default function StatsPage() {
 
   useEffect(() => {
     fetch('/api/stats')
-      .then((r) => r.json())
+      .then((r) => { if (!r.ok) throw new Error('Failed to load'); return r.json(); })
       .then((data) => { setStats(data); setLoading(false); })
-      .catch(() => setLoading(false));
+      .catch((err) => { console.error('Failed to load stats:', err); setLoading(false); });
   }, []);
 
   if (loading) return <LoadingSkeleton count={2} />;

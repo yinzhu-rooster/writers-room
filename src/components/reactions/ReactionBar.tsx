@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import type { ReactionType } from '@/types/enums';
 
 const REACTIONS: { type: ReactionType; emoji: string; label: string }[] = [
@@ -19,7 +19,7 @@ export function ReactionBar({ pitchId, myReaction, onChange }: ReactionBarProps)
   const [current, setCurrent] = useState<ReactionType | null>(myReaction);
   const [loading, setLoading] = useState(false);
 
-  const handleReact = async (type: ReactionType) => {
+  const handleReact = useCallback(async (type: ReactionType) => {
     setLoading(true);
 
     // Optimistic update — capture previous value before setting new
@@ -39,7 +39,7 @@ export function ReactionBar({ pitchId, myReaction, onChange }: ReactionBarProps)
 
     setLoading(false);
     onChange?.();
-  };
+  }, [pitchId, current, onChange]);
 
   return (
     <div className="flex items-center gap-2" role="group" aria-label="Reactions">

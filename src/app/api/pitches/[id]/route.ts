@@ -29,7 +29,7 @@ export async function PATCH(
   if (pitch.user_id !== user.id) return forbidden('Not your pitch');
 
   // Check edit window: min(created_at + 5min, closes_at) > now()
-  const prompt = pitch.prompts as unknown as { closes_at: string };
+  const prompt = pitch.prompts as { closes_at: string };
   const editDeadline = Math.min(
     new Date(pitch.created_at).getTime() + 5 * 60 * 1000,
     new Date(prompt.closes_at).getTime()
@@ -75,7 +75,7 @@ export async function DELETE(
   if (!pitch) return notFound('Pitch not found');
   if (pitch.user_id !== user.id) return forbidden('Not your pitch');
 
-  const prompt = pitch.prompts as unknown as { closes_at: string };
+  const prompt = pitch.prompts as { closes_at: string };
   if (new Date(prompt.closes_at) <= new Date()) {
     return badRequest('Cannot delete pitches on closed prompts', 'PROMPT_CLOSED');
   }
