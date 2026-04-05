@@ -148,7 +148,7 @@ describe('POST /api/pitches/[id]/reactions', () => {
     vi.mocked(createClient).mockResolvedValue(supabase as any);
 
     const response = await POST(makePostRequest({ reaction_type: 'laugh' }), { params: Promise.resolve({ id: 'pitch-1' }) });
-    expect(response.status).toBe(201);
+    expect(response.status).toBe(200);
     const body = await response.json();
     expect(body.reaction).toEqual(newReaction);
   });

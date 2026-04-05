@@ -2,11 +2,11 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { NextRequest } from 'next/server';
 import { GET } from './route';
 
-vi.mock('@/lib/supabase/admin', () => ({
-  createAdminClient: vi.fn(),
+vi.mock('@/lib/supabase/server', () => ({
+  createClient: vi.fn(),
 }));
 
-import { createAdminClient } from '@/lib/supabase/admin';
+import { createClient } from '@/lib/supabase/server';
 
 function mockChain(data: unknown = null, error: unknown = null, count: number | null = null) {
   const chain: any = {};
@@ -33,7 +33,7 @@ describe('GET /api/users/[id]/profile', () => {
     const supabase = {
       from: vi.fn().mockReturnValue(mockChain(null)),
     };
-    vi.mocked(createAdminClient).mockReturnValue(supabase as any);
+    vi.mocked(createClient).mockResolvedValue(supabase as any);
 
     const response = await GET(makeRequest(), { params: Promise.resolve({ id: 'nonexistent' }) });
     expect(response.status).toBe(404);
@@ -61,16 +61,18 @@ describe('GET /api/users/[id]/profile', () => {
         if (table === 'pitches') {
           callCount++;
           if (callCount === 1) return mockChain(null, null, 8); // pitch count
-          if (callCount === 2) return mockChain(null, null, 0); // topics count
-          if (callCount === 3) return mockChain([]); // closed topics
-          if (callCount === 4) return mockChain({ rank: 2 }); // best finish
-          return mockChain(pitches); // reaction totals
+          if (callCount === 2) return mockChain({ rank: 2 }); // best finish
+          if (callCount === 3) return mockChain(null); // aggregate attempt
+          return mockChain(pitches); // reaction totals fallback
         }
-        if (table === 'prompts') return mockChain(null, null, 3);
+        if (table === 'prompts') {
+          // First call: count, second call: closedTopics
+          return mockChain(null, null, 3);
+        }
         return mockChain(null, null, 0);
       }),
     };
-    vi.mocked(createAdminClient).mockReturnValue(supabase as any);
+    vi.mocked(createClient).mockResolvedValue(supabase as any);
 
     const response = await GET(makeRequest(), { params: Promise.resolve({ id: 'user-1' }) });
     expect(response.status).toBe(200);

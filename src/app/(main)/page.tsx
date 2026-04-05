@@ -1,10 +1,11 @@
 'use client';
 
-import { useEffect, useState, useCallback, useRef } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { PromptCard } from '@/components/prompts/PromptCard';
 import { CreatePromptModal } from '@/components/prompts/CreatePromptModal';
 import { LoadingSkeleton } from '@/components/ui/LoadingSkeleton';
 import { EmptyState } from '@/components/ui/EmptyState';
+import { useInfiniteScroll } from '@/hooks/useInfiniteScroll';
 import type { Prompt } from '@/types/database';
 
 export default function OpenTopicsPage() {
@@ -15,7 +16,6 @@ export default function OpenTopicsPage() {
   const [loadingMore, setLoadingMore] = useState(false);
   const [showCreate, setShowCreate] = useState(false);
   const [error, setError] = useState('');
-  const sentinelRef = useRef<HTMLDivElement>(null);
 
   const loadPage = useCallback(async (pageNum: number, append: boolean) => {
     if (append) setLoadingMore(true); else setLoading(true);
@@ -44,20 +44,10 @@ export default function OpenTopicsPage() {
     if (page > 1) loadPage(page, true);
   }, [page, loadPage]);
 
-  useEffect(() => {
-    const sentinel = sentinelRef.current;
-    if (!sentinel) return;
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (entries[0].isIntersecting && hasMore && !loadingMore && !loading) {
-          setPage(p => p + 1);
-        }
-      },
-      { rootMargin: '200px' }
-    );
-    observer.observe(sentinel);
-    return () => observer.disconnect();
-  }, [hasMore, loadingMore, loading]);
+  const sentinelRef = useInfiniteScroll(
+    () => setPage(p => p + 1),
+    hasMore && !loadingMore && !loading,
+  );
 
   const handleCreated = () => {
     setPage(1);

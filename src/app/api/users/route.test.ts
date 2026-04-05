@@ -2,11 +2,11 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { NextRequest } from 'next/server';
 import { GET } from './route';
 
-vi.mock('@/lib/supabase/admin', () => ({
-  createAdminClient: vi.fn(),
+vi.mock('@/lib/supabase/server', () => ({
+  createClient: vi.fn(),
 }));
 
-import { createAdminClient } from '@/lib/supabase/admin';
+import { createClient } from '@/lib/supabase/server';
 
 function mockChain(data: unknown = null, error: unknown = null, count: number | null = null) {
   const chain: any = {};
@@ -41,7 +41,7 @@ describe('GET /api/users', () => {
     const supabase = {
       from: vi.fn().mockReturnValue(mockChain(users, null, 2)),
     };
-    vi.mocked(createAdminClient).mockReturnValue(supabase as any);
+    vi.mocked(createClient).mockResolvedValue(supabase as any);
 
     const response = await GET(makeRequest());
     expect(response.status).toBe(200);
@@ -58,7 +58,7 @@ describe('GET /api/users', () => {
     const supabase = {
       from: vi.fn().mockReturnValue(mockChain(users, null, 2)),
     };
-    vi.mocked(createAdminClient).mockReturnValue(supabase as any);
+    vi.mocked(createClient).mockResolvedValue(supabase as any);
 
     const response = await GET(makeRequest({ sort: 'newest' }));
     expect(response.status).toBe(200);
@@ -70,7 +70,7 @@ describe('GET /api/users', () => {
     const supabase = {
       from: vi.fn().mockReturnValue(mockChain(null, { message: 'DB error' })),
     };
-    vi.mocked(createAdminClient).mockReturnValue(supabase as any);
+    vi.mocked(createClient).mockResolvedValue(supabase as any);
 
     const response = await GET(makeRequest());
     expect(response.status).toBe(500);

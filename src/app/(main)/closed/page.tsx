@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback, useRef } from 'react';
 import { PromptCard } from '@/components/prompts/PromptCard';
 import { LoadingSkeleton } from '@/components/ui/LoadingSkeleton';
 import { EmptyState } from '@/components/ui/EmptyState';
+import { useInfiniteScroll } from '@/hooks/useInfiniteScroll';
 import type { Prompt } from '@/types/database';
 
 const SORT_OPTIONS = [
@@ -23,7 +24,6 @@ export default function ClosedTopicsPage() {
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const [error, setError] = useState('');
-  const sentinelRef = useRef<HTMLDivElement>(null);
 
   const sortRef = useRef(sort);
 
@@ -62,21 +62,10 @@ export default function ClosedTopicsPage() {
     if (page > 1) loadPage(page, sort, true);
   }, [page, sort, loadPage]);
 
-  // Intersection observer for infinite scroll
-  useEffect(() => {
-    const sentinel = sentinelRef.current;
-    if (!sentinel) return;
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (entries[0].isIntersecting && hasMore && !loadingMore && !loading) {
-          setPage(p => p + 1);
-        }
-      },
-      { rootMargin: '200px' }
-    );
-    observer.observe(sentinel);
-    return () => observer.disconnect();
-  }, [hasMore, loadingMore, loading]);
+  const sentinelRef = useInfiniteScroll(
+    () => setPage(p => p + 1),
+    hasMore && !loadingMore && !loading,
+  );
 
   return (
     <div>
@@ -85,6 +74,7 @@ export default function ClosedTopicsPage() {
         <select
           value={sort}
           onChange={(e) => setSort(e.target.value as SortValue)}
+          aria-label="Sort by"
           className="text-sm border border-gray-200 rounded-lg px-3 py-1.5 text-gray-700 bg-white"
         >
           {SORT_OPTIONS.map((opt) => (

@@ -46,7 +46,8 @@ export async function POST(request: NextRequest) {
 
       // Update each pitch with rank and reveal status
       for (const rp of ranked) {
-        const pitch = pitches.find((p) => p.id === rp.id)!;
+        const pitch = pitches.find((p) => p.id === rp.id);
+        if (!pitch) continue;
         const { error: updateError } = await supabase
           .from('pitches')
           .update({

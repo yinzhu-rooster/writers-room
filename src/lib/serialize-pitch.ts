@@ -1,4 +1,5 @@
 import type { PitchWithRelations } from '@/types/database';
+import { EDIT_WINDOW_MS } from '@/lib/constants';
 
 type RawPitch = PitchWithRelations;
 
@@ -30,17 +31,16 @@ export function serializePitch(pitch: RawPitch, opts: SerializeOptions) {
   if (isOpen) {
     const editDeadline = new Date(
       Math.min(
-        new Date(pitch.created_at).getTime() + 5 * 60 * 1000,
+        new Date(pitch.created_at).getTime() + EDIT_WINDOW_MS,
         new Date(closesAt).getTime()
       )
     ).toISOString();
 
-    const openUser = pitch.users;
     return {
       ...base,
       user_id: isOwn ? pitch.user_id : null,
       username: null,
-      is_ai: openUser?.is_ai ?? false,
+      is_ai: pitch.users?.is_ai ?? false,
       laugh_count: null,
       smile_count: null,
       surprise_count: null,
@@ -51,13 +51,12 @@ export function serializePitch(pitch: RawPitch, opts: SerializeOptions) {
     };
   }
 
-  const pitchUser = pitch.users;
   const showByline = isOwn || pitch.total_reaction_count >= (opts.minReactionsForReveal ?? 3);
   return {
     ...base,
     user_id: showByline ? pitch.user_id : null,
-    username: showByline ? pitchUser?.username ?? null : null,
-    is_ai: pitchUser?.is_ai ?? false,
+    username: showByline ? pitch.users?.username ?? null : null,
+    is_ai: pitch.users?.is_ai ?? false,
     laugh_count: pitch.laugh_count,
     smile_count: pitch.smile_count,
     surprise_count: pitch.surprise_count,

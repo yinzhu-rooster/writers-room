@@ -18,7 +18,8 @@ function makePitch(overrides: Partial<PitchWithRelations> = {}): PitchWithRelati
     total_reaction_count: 8,
     rank: 1,
     is_revealed: true,
-    users: { username: 'comedian' },
+    users: { username: 'comedian', is_ai: false },
+    prompts: { closes_at: '2026-01-01T18:00:00Z' },
     reactions: [
       { reaction_type: 'laugh', user_id: 'user-2' },
       { reaction_type: 'smile', user_id: 'user-1' },

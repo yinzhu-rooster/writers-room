@@ -70,8 +70,9 @@ export function CreatePromptModal({ open, onClose, onCreated }: CreatePromptModa
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Prompt</label>
+            <label htmlFor="create-prompt-body" className="block text-sm font-medium text-gray-700 mb-1">Prompt</label>
             <textarea
+              id="create-prompt-body"
               value={body}
               onChange={(e) => setBody(e.target.value)}
               rows={3}
@@ -83,10 +84,11 @@ export function CreatePromptModal({ open, onClose, onCreated }: CreatePromptModa
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label htmlFor="create-prompt-duration" className="block text-sm font-medium text-gray-700 mb-1">
               Duration: {durationHours}h
             </label>
             <input
+              id="create-prompt-duration"
               type="range"
               min={1}
               max={72}

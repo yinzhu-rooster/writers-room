@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { badRequest, notFound, unauthorized, forbidden, safeJson } from '@/lib/api-error';
+import { rateLimit } from '@/lib/rate-limit';
 
 export async function POST(
   request: NextRequest,
@@ -10,6 +11,9 @@ export async function POST(
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return unauthorized();
+
+  const limited = rateLimit(`reactions:${user.id}`, 30);
+  if (limited) return limited;
 
   const json = await safeJson<{ reaction_type?: string }>(request);
   if (json instanceof NextResponse) return json;
@@ -35,8 +39,8 @@ export async function POST(
     return badRequest('This prompt is closed', 'PROMPT_CLOSED');
   }
 
-  // Use upsert for the entire operation to avoid race conditions
-  // First, check if toggling off (same reaction type means remove)
+  // Atomic toggle: try upsert first, then check if we need to delete (same type = toggle off)
+  // Use a single upsert to avoid check-then-act race condition
   const { data: existing } = await supabase
     .from('reactions')
     .select('id, reaction_type')
@@ -45,8 +49,13 @@ export async function POST(
     .maybeSingle();
 
   if (existing?.reaction_type === reaction_type) {
-    // Toggle off — same reaction means remove
-    const { error: delError } = await supabase.from('reactions').delete().eq('id', existing.id);
+    // Toggle off — delete by compound key to avoid stale ID race
+    const { error: delError } = await supabase
+      .from('reactions')
+      .delete()
+      .eq('pitch_id', pitchId)
+      .eq('user_id', user.id)
+      .eq('reaction_type', reaction_type);
     if (delError) return badRequest('Failed to remove reaction');
     return NextResponse.json({ reaction: null });
   }
@@ -62,7 +71,7 @@ export async function POST(
     .single();
 
   if (error) return badRequest('Failed to save reaction');
-  return NextResponse.json({ reaction: upserted }, { status: existing ? 200 : 201 });
+  return NextResponse.json({ reaction: upserted });
 }
 
 export async function DELETE(

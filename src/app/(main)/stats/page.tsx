@@ -14,15 +14,17 @@ interface CommunityStats {
 export default function StatsPage() {
   const [stats, setStats] = useState<CommunityStats | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
 
   useEffect(() => {
     fetch('/api/stats')
       .then((r) => { if (!r.ok) throw new Error('Failed to load'); return r.json(); })
       .then((data) => { setStats(data); setLoading(false); })
-      .catch((err) => { console.error('Failed to load stats:', err); setLoading(false); });
+      .catch((err) => { setError(err.message); setLoading(false); });
   }, []);
 
   if (loading) return <LoadingSkeleton count={2} />;
+  if (error) return <p className="text-center text-red-600 py-12">{error}</p>;
 
   return (
     <div>

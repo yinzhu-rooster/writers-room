@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { createPromptSchema } from '@/lib/validators/prompt';
 import { badRequest, unauthorized, safeJson } from '@/lib/api-error';
+import { rateLimit } from '@/lib/rate-limit';
+import { MAX_PAGE } from '@/lib/constants';
 
 const PAGE_SIZE = 100;
 
@@ -10,7 +12,7 @@ export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const status = searchParams.get('status') ?? 'open';
   const sort = searchParams.get('sort') ?? 'newest';
-  const page = Math.max(1, parseInt(searchParams.get('page') ?? '1', 10));
+  const page = Math.max(1, Math.min(parseInt(searchParams.get('page') ?? '1', 10), MAX_PAGE));
   const offset = (page - 1) * PAGE_SIZE;
 
   const { data: { user } } = await supabase.auth.getUser();
@@ -86,6 +88,9 @@ export async function POST(request: NextRequest) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return unauthorized();
+
+  const limited = rateLimit(`prompts:${user.id}`, 5, 60_000);
+  if (limited) return limited;
 
   const body = await safeJson(request);
   if (body instanceof NextResponse) return body;

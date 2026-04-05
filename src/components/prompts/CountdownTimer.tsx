@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 
 function formatTimeLeft(ms: number): string {
   if (ms <= 0) return 'Closed';
@@ -15,6 +15,11 @@ function formatTimeLeft(ms: number): string {
 
 export function CountdownTimer({ closesAt, onExpired }: { closesAt: string; onExpired?: () => void }) {
   const [timeLeft, setTimeLeft] = useState(() => new Date(closesAt).getTime() - Date.now());
+  const onExpiredRef = useRef(onExpired);
+
+  useEffect(() => {
+    onExpiredRef.current = onExpired;
+  }, [onExpired]);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -22,11 +27,11 @@ export function CountdownTimer({ closesAt, onExpired }: { closesAt: string; onEx
       setTimeLeft(remaining);
       if (remaining <= 0) {
         clearInterval(interval);
-        onExpired?.();
+        onExpiredRef.current?.();
       }
     }, 1000);
     return () => clearInterval(interval);
-  }, [closesAt, onExpired]);
+  }, [closesAt]);
 
   const isClosed = timeLeft <= 0;
 

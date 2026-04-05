@@ -44,9 +44,13 @@ export async function middleware(request: NextRequest) {
       let hasUsername = false;
 
       if (!existingUser) {
+        if (!user.email) {
+          console.error('User has no email, cannot create profile:', user.id);
+          return supabaseResponse;
+        }
         await admin.from('users').insert({
           id: user.id,
-          email: user.email!,
+          email: user.email,
           avatar_url: user.user_metadata?.avatar_url ?? null,
         });
         hasUsername = false;
@@ -78,6 +82,8 @@ export async function middleware(request: NextRequest) {
     }
   } catch (e) {
     console.error('Middleware error:', e);
+    // Return 500 instead of silently passing through on auth errors
+    return new NextResponse('Internal Server Error', { status: 500 });
   }
 
   return supabaseResponse;

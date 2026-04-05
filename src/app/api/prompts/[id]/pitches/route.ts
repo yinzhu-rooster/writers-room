@@ -4,6 +4,8 @@ import { createPitchSchema } from '@/lib/validators/pitch';
 import { badRequest, notFound, unauthorized, safeJson } from '@/lib/api-error';
 import { getConfigInt } from '@/lib/config';
 import { serializePitch } from '@/lib/serialize-pitch';
+import { rateLimit } from '@/lib/rate-limit';
+import { MAX_PAGE } from '@/lib/constants';
 import type { PitchWithRelations } from '@/types/database';
 
 
@@ -17,7 +19,7 @@ export async function GET(
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   const { searchParams } = new URL(request.url);
-  const page = Math.max(1, parseInt(searchParams.get('page') ?? '1', 10));
+  const page = Math.max(1, Math.min(parseInt(searchParams.get('page') ?? '1', 10), MAX_PAGE));
   const offset = (page - 1) * PAGE_SIZE;
 
   // Get prompt to check status
@@ -79,6 +81,9 @@ export async function POST(
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return unauthorized();
 
+  const limited = rateLimit(`pitches:${user.id}`, 10);
+  if (limited) return limited;
+
   const body = await safeJson(request);
   if (body instanceof NextResponse) return body;
   const parsed = createPitchSchema.safeParse(body);
@@ -124,7 +129,7 @@ export async function POST(
 
   if (error) {
     console.error('Pitch insert error:', error.message, error.details, error.code);
-    return badRequest(error.message);
+    return badRequest('Failed to create pitch');
   }
 
   return NextResponse.json(pitch, { status: 201 });

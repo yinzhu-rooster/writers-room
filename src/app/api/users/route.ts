@@ -1,13 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createAdminClient } from '@/lib/supabase/admin';
+import { createClient } from '@/lib/supabase/server';
 
 const PAGE_SIZE = 100;
 
 export async function GET(request: NextRequest) {
-  const supabase = createAdminClient();
+  const supabase = await createClient();
   const { searchParams } = new URL(request.url);
   const sort = searchParams.get('sort') ?? 'name';
-  const page = Math.max(1, parseInt(searchParams.get('page') ?? '1', 10));
+  const page = Math.max(1, Math.min(parseInt(searchParams.get('page') ?? '1', 10), 1000));
   const offset = (page - 1) * PAGE_SIZE;
 
   let query = supabase
@@ -25,7 +25,7 @@ export async function GET(request: NextRequest) {
 
   const { data, count, error } = await query;
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ error: 'Failed to load writers' }, { status: 500 });
   }
 
   return NextResponse.json({

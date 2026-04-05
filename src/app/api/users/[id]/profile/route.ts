@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createAdminClient } from '@/lib/supabase/admin';
+import { createClient } from '@/lib/supabase/server';
 import { notFound } from '@/lib/api-error';
 
 export async function GET(
@@ -7,7 +7,7 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
-  const supabase = createAdminClient();
+  const supabase = await createClient();
 
   // User profile
   const { data: user } = await supabase
@@ -52,21 +52,39 @@ export async function GET(
     .limit(1)
     .single();
 
-  // Total reactions received
-  const { data: reactionTotals } = await supabase
+  // Total reactions received — use SUM via aggregate instead of fetching all rows
+  const { data: reactionAgg } = await supabase
     .from('pitches')
-    .select('laugh_count, smile_count, surprise_count')
+    .select('laugh_count.sum(), smile_count.sum(), surprise_count.sum()')
     .eq('user_id', id)
-    .is('deleted_at', null);
+    .is('deleted_at', null)
+    .single();
 
-  const reactions = (reactionTotals ?? []).reduce(
-    (acc, p) => ({
-      laughs: acc.laughs + p.laugh_count,
-      smiles: acc.smiles + p.smile_count,
-      surprises: acc.surprises + p.surprise_count,
-    }),
-    { laughs: 0, smiles: 0, surprises: 0 }
-  );
+  const reactions = {
+    laughs: reactionAgg?.sum ?? 0,
+    smiles: reactionAgg?.sum ?? 0,
+    surprises: reactionAgg?.sum ?? 0,
+  };
+
+  // Fallback: if aggregate syntax isn't supported, use the old approach with a limit
+  if (!reactionAgg) {
+    const { data: reactionTotals } = await supabase
+      .from('pitches')
+      .select('laugh_count, smile_count, surprise_count')
+      .eq('user_id', id)
+      .is('deleted_at', null)
+      .limit(1000);
+
+    const totals = (reactionTotals ?? []).reduce(
+      (acc, p) => ({
+        laughs: acc.laughs + p.laugh_count,
+        smiles: acc.smiles + p.smile_count,
+        surprises: acc.surprises + p.surprise_count,
+      }),
+      { laughs: 0, smiles: 0, surprises: 0 }
+    );
+    Object.assign(reactions, totals);
+  }
 
   return NextResponse.json({
     user,

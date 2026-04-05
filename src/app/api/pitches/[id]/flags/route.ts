@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { badRequest, unauthorized, conflict, safeJson } from '@/lib/api-error';
+import { rateLimit } from '@/lib/rate-limit';
 
 export async function POST(
   request: NextRequest,
@@ -10,6 +11,9 @@ export async function POST(
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return unauthorized();
+
+  const limited = rateLimit(`flags:${user.id}`, 10);
+  if (limited) return limited;
 
   const json = await safeJson<{ reason?: string }>(request);
   if (json instanceof NextResponse) return json;
@@ -28,7 +32,8 @@ export async function POST(
 
   if (!pitch) return badRequest('Pitch not found');
 
-  const prompt = pitch.prompts as unknown as { closes_at: string };
+  const prompts = pitch.prompts as unknown as { closes_at: string } | { closes_at: string }[];
+  const prompt = Array.isArray(prompts) ? prompts[0] : prompts;
   if (new Date(prompt.closes_at) <= new Date()) {
     return badRequest('Cannot flag on closed prompts');
   }

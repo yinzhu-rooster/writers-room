@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { updatePitchSchema } from '@/lib/validators/pitch';
 import { badRequest, unauthorized, forbidden, notFound, safeJson } from '@/lib/api-error';
+import { EDIT_WINDOW_MS } from '@/lib/constants';
 
 export async function PATCH(
   request: NextRequest,
@@ -28,10 +29,10 @@ export async function PATCH(
   if (!pitch) return notFound('Pitch not found');
   if (pitch.user_id !== user.id) return forbidden('Not your pitch');
 
-  // Check edit window: min(created_at + 5min, closes_at) > now()
+  // Check edit window: min(created_at + EDIT_WINDOW_MS, closes_at) > now()
   const prompt = pitch.prompts as { closes_at: string };
   const editDeadline = Math.min(
-    new Date(pitch.created_at).getTime() + 5 * 60 * 1000,
+    new Date(pitch.created_at).getTime() + EDIT_WINDOW_MS,
     new Date(prompt.closes_at).getTime()
   );
 

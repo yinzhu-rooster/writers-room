@@ -57,7 +57,9 @@ export function PitchEditModal({ pitchId, initialBody, onClose, onSaved }: Pitch
         <h2 className="text-lg font-bold text-gray-900 mb-4">Edit Pitch</h2>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
+            <label htmlFor="edit-pitch-body" className="sr-only">Pitch body</label>
             <textarea
+              id="edit-pitch-body"
               value={body}
               onChange={(e) => setBody(e.target.value)}
               rows={4}

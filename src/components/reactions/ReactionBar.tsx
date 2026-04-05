@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import type { ReactionType } from '@/types/enums';
 
 const REACTIONS: { type: ReactionType; emoji: string; label: string }[] = [
@@ -18,13 +18,18 @@ interface ReactionBarProps {
 export function ReactionBar({ pitchId, myReaction, onChange }: ReactionBarProps) {
   const [current, setCurrent] = useState<ReactionType | null>(myReaction);
   const [loading, setLoading] = useState(false);
+  // Use ref for previous value to avoid stale closure issues
+  const currentRef = useRef(current);
+  currentRef.current = current;
+  const onChangeRef = useRef(onChange);
+  onChangeRef.current = onChange;
 
   const handleReact = useCallback(async (type: ReactionType) => {
     setLoading(true);
 
-    // Optimistic update — capture previous value before setting new
-    const previous = current;
-    const newReaction = current === type ? null : type;
+    // Capture previous via ref to avoid stale closure
+    const previous = currentRef.current;
+    const newReaction = previous === type ? null : type;
     setCurrent(newReaction);
 
     const res = await fetch(`/api/pitches/${pitchId}/reactions`, {
@@ -38,8 +43,8 @@ export function ReactionBar({ pitchId, myReaction, onChange }: ReactionBarProps)
     }
 
     setLoading(false);
-    onChange?.();
-  }, [pitchId, current, onChange]);
+    onChangeRef.current?.();
+  }, [pitchId]);
 
   return (
     <div className="flex items-center gap-2" role="group" aria-label="Reactions">

@@ -6,6 +6,7 @@ import { PitchEditModal } from './PitchEditModal';
 import { LoadingSkeleton } from '@/components/ui/LoadingSkeleton';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { useToast } from '@/components/ui/ToastProvider';
+import { useInfiniteScroll } from '@/hooks/useInfiniteScroll';
 
 interface PitchListProps {
   promptId: string;
@@ -21,8 +22,8 @@ export function PitchList({ promptId, isOpen, refreshKey }: PitchListProps) {
   const [loadingMore, setLoadingMore] = useState(false);
   const [editingPitch, setEditingPitch] = useState<{ id: string; body: string } | null>(null);
   const { showToast } = useToast();
-  const sentinelRef = useRef<HTMLDivElement>(null);
   const abortRef = useRef<AbortController | null>(null);
+  const revisionRef = useRef(0);
 
   const loadPage = useCallback(async (pageNum: number, append: boolean) => {
     // Abort any in-flight request to prevent race conditions
@@ -30,12 +31,17 @@ export function PitchList({ promptId, isOpen, refreshKey }: PitchListProps) {
     const controller = new AbortController();
     abortRef.current = controller;
 
+    // Track revision to discard stale responses
+    const revision = ++revisionRef.current;
+
     if (append) setLoadingMore(true); else setLoading(true);
     try {
       const res = await fetch(`/api/prompts/${promptId}/pitches?page=${pageNum}`, {
         signal: controller.signal,
       });
       if (!res.ok) throw new Error('Failed to load');
+      // Discard stale response if a newer request was initiated
+      if (revisionRef.current !== revision) return;
       const data = await res.json();
       const newPitches = data.pitches ?? [];
       const total = data.total ?? 0;
@@ -49,8 +55,10 @@ export function PitchList({ promptId, isOpen, refreshKey }: PitchListProps) {
       if (err instanceof DOMException && err.name === 'AbortError') return;
       console.error('Failed to load pitches:', err);
     }
-    setLoading(false);
-    setLoadingMore(false);
+    if (revisionRef.current === revision) {
+      setLoading(false);
+      setLoadingMore(false);
+    }
   }, [promptId]);
 
   // Reset on refreshKey change
@@ -65,31 +73,10 @@ export function PitchList({ promptId, isOpen, refreshKey }: PitchListProps) {
     if (page > 1) loadPage(page, true);
   }, [page, loadPage]);
 
-  // Use refs for intersection observer to avoid stale closures
-  const hasMoreRef = useRef(hasMore);
-  const loadingMoreRef = useRef(loadingMore);
-  const loadingRef = useRef(loading);
-  hasMoreRef.current = hasMore;
-  loadingMoreRef.current = loadingMore;
-  loadingRef.current = loading;
-
-  // Intersection observer for infinite scroll
-  useEffect(() => {
-    const sentinel = sentinelRef.current;
-    if (!sentinel) return;
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (entries[0].isIntersecting && hasMoreRef.current && !loadingMoreRef.current && !loadingRef.current) {
-          setPage(p => p + 1);
-        }
-      },
-      { rootMargin: '200px' }
-    );
-
-    observer.observe(sentinel);
-    return () => observer.disconnect();
-  }, []);
+  const sentinelRef = useInfiniteScroll(
+    () => setPage(p => p + 1),
+    hasMore && !loadingMore && !loading,
+  );
 
   const handleDelete = async (pitchId: string) => {
     if (!window.confirm('Delete this pitch? This cannot be undone.')) return;

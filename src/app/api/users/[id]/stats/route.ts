@@ -43,12 +43,13 @@ export async function GET(
     .order('created_at', { ascending: false })
     .limit(50);
 
-  // Reaction breakdown (aggregate of all reactions received)
+  // Reaction breakdown (aggregate of all reactions received, bounded)
   const { data: reactionTotals } = await supabase
     .from('pitches')
     .select('laugh_count, smile_count, surprise_count')
     .eq('user_id', id)
-    .is('deleted_at', null);
+    .is('deleted_at', null)
+    .limit(1000);
 
   const totals = (reactionTotals ?? []).reduce(
     (acc, p) => ({

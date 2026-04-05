@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { badRequest, notFound, unauthorized, conflict, safeJson } from '@/lib/api-error';
+import { rateLimit } from '@/lib/rate-limit';
 
 export async function POST(
   request: NextRequest,
@@ -10,6 +11,9 @@ export async function POST(
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return unauthorized();
+
+  const limited = rateLimit(`flags:${user.id}`, 10);
+  if (limited) return limited;
 
   const json = await safeJson<{ reason?: string }>(request);
   if (json instanceof NextResponse) return json;

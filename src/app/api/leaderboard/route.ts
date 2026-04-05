@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { unauthorized } from '@/lib/api-error';
+import { MAX_PAGE } from '@/lib/constants';
 
 const PAGE_SIZE = 100;
 const VALID_SORTS = ['total_laughs', 'avg_laughs', 'total_reps', 'top3_pct'] as const;
@@ -14,7 +15,7 @@ export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const rawSort = searchParams.get('sort') ?? 'total_laughs';
   const sort: SortMode = VALID_SORTS.includes(rawSort as SortMode) ? rawSort as SortMode : 'total_laughs';
-  const page = Math.max(1, parseInt(searchParams.get('page') ?? '1', 10));
+  const page = Math.max(1, Math.min(parseInt(searchParams.get('page') ?? '1', 10), MAX_PAGE));
   const offset = (page - 1) * PAGE_SIZE;
 
   if (sort === 'total_laughs' || sort === 'total_reps') {

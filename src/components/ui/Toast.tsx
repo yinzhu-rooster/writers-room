@@ -30,7 +30,7 @@ export function Toast({ message, type = 'success', onClose }: ToastProps) {
     <div
       role="status"
       aria-live="polite"
-      className={`fixed bottom-24 left-1/2 -translate-x-1/2 z-50 rounded-lg px-4 py-2.5 text-sm text-white shadow-lg transition-opacity duration-300 ${bgColor} ${
+      className={`fixed bottom-24 md:bottom-8 left-1/2 -translate-x-1/2 z-50 rounded-lg px-4 py-2.5 text-sm text-white shadow-lg transition-opacity duration-300 ${bgColor} ${
         visible ? 'opacity-100' : 'opacity-0'
       }`}
     >

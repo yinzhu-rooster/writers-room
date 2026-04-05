@@ -33,16 +33,22 @@ export default function WriterProfilePage() {
   const { id } = useParams<{ id: string }>();
   const [data, setData] = useState<ProfileData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
   const [showTopics, setShowTopics] = useState(false);
 
   useEffect(() => {
     fetch(`/api/users/${id}/profile`)
-      .then((r) => r.ok ? r.json() : null)
+      .then((r) => {
+        if (r.status === 404) return null;
+        if (!r.ok) throw new Error('Failed to load profile');
+        return r.json();
+      })
       .then((d) => { setData(d); setLoading(false); })
-      .catch(() => setLoading(false));
+      .catch((err) => { setError(err.message); setLoading(false); });
   }, [id]);
 
   if (loading) return <LoadingSkeleton count={3} />;
+  if (error) return <p className="text-center text-red-600 py-12">{error}</p>;
   if (!data) return <EmptyState message="Writer not found" />;
 
   const { user, pitch_count, topics_created, closed_topics, best_finish, reactions } = data;
