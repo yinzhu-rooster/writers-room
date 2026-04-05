@@ -25,12 +25,15 @@ export default function ClosedTopicsPage() {
   const [error, setError] = useState('');
   const sentinelRef = useRef<HTMLDivElement>(null);
 
+  const sortRef = useRef(sort);
+
   const loadPage = useCallback(async (pageNum: number, sortBy: SortValue, append: boolean) => {
     if (append) setLoadingMore(true); else setLoading(true);
     setError('');
     try {
       const res = await fetch(`/api/prompts?status=closed&sort=${sortBy}&page=${pageNum}`);
       if (!res.ok) throw new Error('Failed to load');
+      if (sortRef.current !== sortBy) return;
       const data = await res.json();
       const newPrompts = data.prompts ?? [];
       const total = data.total ?? 0;
@@ -43,12 +46,12 @@ export default function ClosedTopicsPage() {
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Failed to load');
     }
-    setLoading(false);
-    setLoadingMore(false);
+    if (append) setLoadingMore(false); else setLoading(false);
   }, []);
 
   // Reset when sort changes
   useEffect(() => {
+    sortRef.current = sort;
     setPage(1);
     setHasMore(true);
     loadPage(1, sort, false);
@@ -104,9 +107,11 @@ export default function ClosedTopicsPage() {
         </div>
       )}
 
-      <div ref={sentinelRef} className="py-4">
-        {loadingMore && <LoadingSkeleton count={2} height="h-24" />}
-      </div>
+      {hasMore && prompts.length > 0 && (
+        <div ref={sentinelRef} className="py-4">
+          {loadingMore && <LoadingSkeleton count={2} height="h-24" />}
+        </div>
+      )}
     </div>
   );
 }

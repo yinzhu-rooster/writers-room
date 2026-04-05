@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 
-const PAGE_SIZE = 50;
+const PAGE_SIZE = 100;
 
 export async function GET(request: NextRequest) {
   const supabase = createAdminClient();

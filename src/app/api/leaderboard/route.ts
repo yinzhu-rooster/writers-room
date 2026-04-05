@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { unauthorized } from '@/lib/api-error';
 
-const PAGE_SIZE = 20;
+const PAGE_SIZE = 100;
 const VALID_SORTS = ['total_laughs', 'avg_laughs', 'total_reps', 'top3_pct'] as const;
 type SortMode = typeof VALID_SORTS[number];
 

@@ -4,7 +4,7 @@ import { createPitchSchema } from '@/lib/validators/pitch';
 import { badRequest, unauthorized, safeJson } from '@/lib/api-error';
 import { getConfigInt } from '@/lib/config';
 import { serializePitch } from '@/lib/serialize-pitch';
-import { hashSeed, seededShuffle } from '@/lib/shuffle';
+
 
 const PAGE_SIZE = 100;
 
@@ -37,7 +37,7 @@ export async function GET(
     .is('deleted_at', null);
 
   if (isOpen) {
-    query = query.order('created_at', { ascending: true });
+    query = query.order('created_at', { ascending: false });
   } else {
     query = query.order('laugh_count', { ascending: false });
   }
@@ -60,12 +60,6 @@ export async function GET(
       minReactionsForReveal,
     })
   );
-
-  // Seeded shuffle for open prompts — same user sees same order per prompt+page
-  if (isOpen) {
-    const seed = hashSeed(`${user?.id ?? 'anon'}:${promptId}:${page}`);
-    seededShuffle(serialized, seed);
-  }
 
   return NextResponse.json({
     pitches: serialized,

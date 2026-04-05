@@ -1,7 +1,6 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
-import { Pagination } from '@/components/ui/Pagination';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { LoadingSkeleton } from '@/components/ui/LoadingSkeleton';
 import { EmptyState } from '@/components/ui/EmptyState';
 
@@ -28,30 +27,62 @@ export default function LeaderboardPage() {
   const [entries, setEntries] = useState<LeaderboardEntry[]>([]);
   const [sort, setSort] = useState<SortMode>('total_laughs');
   const [page, setPage] = useState(1);
-  const [total, setTotal] = useState(0);
+  const [hasMore, setHasMore] = useState(true);
   const [loading, setLoading] = useState(true);
-
-  const pageSize = 20;
-  const totalPages = Math.ceil(total / pageSize);
-
+  const [loadingMore, setLoadingMore] = useState(false);
   const [error, setError] = useState('');
+  const sentinelRef = useRef<HTMLDivElement>(null);
+  const sortRef = useRef(sort);
 
-  const loadLeaderboard = useCallback(async () => {
-    setLoading(true);
+  const loadPage = useCallback(async (pageNum: number, sortBy: SortMode, append: boolean) => {
+    if (append) setLoadingMore(true); else setLoading(true);
     setError('');
     try {
-      const res = await fetch(`/api/leaderboard?sort=${sort}&page=${page}`);
+      const res = await fetch(`/api/leaderboard?sort=${sortBy}&page=${pageNum}`);
       if (!res.ok) throw new Error('Failed to load');
+      // Stale response guard: if sort changed while fetching, discard
+      if (sortRef.current !== sortBy) return;
       const data = await res.json();
-      setEntries(data.leaderboard ?? []);
-      setTotal(data.total ?? 0);
+      const newEntries = data.leaderboard ?? [];
+      const total = data.total ?? 0;
+      if (append) {
+        setEntries(prev => [...prev, ...newEntries]);
+      } else {
+        setEntries(newEntries);
+      }
+      setHasMore(pageNum * (data.page_size ?? 100) < total);
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Failed to load');
     }
-    setLoading(false);
-  }, [sort, page]);
+    if (append) setLoadingMore(false); else setLoading(false);
+  }, []);
 
-  useEffect(() => { loadLeaderboard(); }, [loadLeaderboard]);
+  // Reset when sort changes
+  useEffect(() => {
+    sortRef.current = sort;
+    setPage(1);
+    setHasMore(true);
+    loadPage(1, sort, false);
+  }, [loadPage, sort]);
+
+  useEffect(() => {
+    if (page > 1) loadPage(page, sort, true);
+  }, [page, sort, loadPage]);
+
+  useEffect(() => {
+    const sentinel = sentinelRef.current;
+    if (!sentinel) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && hasMore && !loadingMore && !loading) {
+          setPage(p => p + 1);
+        }
+      },
+      { rootMargin: '200px' }
+    );
+    observer.observe(sentinel);
+    return () => observer.disconnect();
+  }, [hasMore, loadingMore, loading]);
 
   const getValue = (entry: LeaderboardEntry) => {
     switch (sort) {
@@ -72,7 +103,7 @@ export default function LeaderboardPage() {
             key={opt.value}
             role="tab"
             aria-selected={sort === opt.value}
-            onClick={() => { setSort(opt.value); setPage(1); }}
+            onClick={() => setSort(opt.value)}
             className={`px-4 py-2 text-sm rounded-full whitespace-nowrap transition-colors ${
               sort === opt.value
                 ? 'bg-indigo-600 text-white'
@@ -98,7 +129,7 @@ export default function LeaderboardPage() {
               className="flex items-center gap-3 rounded-lg border border-gray-200 px-4 py-3"
             >
               <span className="text-sm font-bold text-gray-400 w-8">
-                {(page - 1) * pageSize + i + 1}
+                {i + 1}
               </span>
               <div className="flex-1 min-w-0">
                 <span className="text-sm font-medium text-gray-900 truncate">
@@ -113,7 +144,11 @@ export default function LeaderboardPage() {
         </div>
       )}
 
-      <Pagination page={page} totalPages={totalPages} onPageChange={setPage} />
+      {hasMore && entries.length > 0 && (
+        <div ref={sentinelRef} className="py-4">
+          {loadingMore && <LoadingSkeleton count={3} height="h-12" />}
+        </div>
+      )}
     </div>
   );
 }

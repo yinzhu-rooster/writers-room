@@ -1,9 +1,8 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { PromptCard } from '@/components/prompts/PromptCard';
 import { CreatePromptModal } from '@/components/prompts/CreatePromptModal';
-import { Pagination } from '@/components/ui/Pagination';
 import { LoadingSkeleton } from '@/components/ui/LoadingSkeleton';
 import { EmptyState } from '@/components/ui/EmptyState';
 import type { Prompt } from '@/types/database';
@@ -11,31 +10,60 @@ import type { Prompt } from '@/types/database';
 export default function OpenTopicsPage() {
   const [prompts, setPrompts] = useState<Prompt[]>([]);
   const [page, setPage] = useState(1);
-  const [total, setTotal] = useState(0);
+  const [hasMore, setHasMore] = useState(true);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [showCreate, setShowCreate] = useState(false);
-
-  const pageSize = 20;
-  const totalPages = Math.ceil(total / pageSize);
-
   const [error, setError] = useState('');
+  const sentinelRef = useRef<HTMLDivElement>(null);
 
-  const loadPrompts = useCallback(async () => {
-    setLoading(true);
+  const loadPage = useCallback(async (pageNum: number, append: boolean) => {
+    if (append) setLoadingMore(true); else setLoading(true);
     setError('');
     try {
-      const res = await fetch(`/api/prompts?status=open&page=${page}`);
+      const res = await fetch(`/api/prompts?status=open&page=${pageNum}`);
       if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error ?? 'Failed to load');
       const data = await res.json();
-      setPrompts(data.prompts ?? []);
-      setTotal(data.total ?? 0);
+      const newPrompts = data.prompts ?? [];
+      const total = data.total ?? 0;
+      if (append) {
+        setPrompts(prev => [...prev, ...newPrompts]);
+      } else {
+        setPrompts(newPrompts);
+      }
+      setHasMore(pageNum * (data.page_size ?? 100) < total);
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Failed to load');
     }
-    setLoading(false);
-  }, [page]);
+    if (append) setLoadingMore(false); else setLoading(false);
+  }, []);
 
-  useEffect(() => { loadPrompts(); }, [loadPrompts]);
+  useEffect(() => { loadPage(1, false); }, [loadPage]);
+
+  useEffect(() => {
+    if (page > 1) loadPage(page, true);
+  }, [page, loadPage]);
+
+  useEffect(() => {
+    const sentinel = sentinelRef.current;
+    if (!sentinel) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && hasMore && !loadingMore && !loading) {
+          setPage(p => p + 1);
+        }
+      },
+      { rootMargin: '200px' }
+    );
+    observer.observe(sentinel);
+    return () => observer.disconnect();
+  }, [hasMore, loadingMore, loading]);
+
+  const handleCreated = () => {
+    setPage(1);
+    setHasMore(true);
+    loadPage(1, false);
+  };
 
   return (
     <div>
@@ -63,12 +91,16 @@ export default function OpenTopicsPage() {
         </div>
       )}
 
-      <Pagination page={page} totalPages={totalPages} onPageChange={setPage} />
+      {hasMore && prompts.length > 0 && (
+        <div ref={sentinelRef} className="py-4">
+          {loadingMore && <LoadingSkeleton count={2} height="h-24" />}
+        </div>
+      )}
 
       <CreatePromptModal
         open={showCreate}
         onClose={() => setShowCreate(false)}
-        onCreated={loadPrompts}
+        onCreated={handleCreated}
       />
     </div>
   );

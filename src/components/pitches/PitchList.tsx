@@ -108,9 +108,11 @@ export function PitchList({ promptId, isOpen, refreshKey }: PitchListProps) {
         ))}
       </div>
 
-      <div ref={sentinelRef} className="py-4">
-        {loadingMore && <LoadingSkeleton count={2} />}
-      </div>
+      {hasMore && pitches.length > 0 && (
+        <div ref={sentinelRef} className="py-4">
+          {loadingMore && <LoadingSkeleton count={2} />}
+        </div>
+      )}
 
       {editingPitch && (
         <PitchEditModal

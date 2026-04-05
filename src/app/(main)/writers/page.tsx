@@ -1,10 +1,9 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import Link from 'next/link';
 import { LoadingSkeleton } from '@/components/ui/LoadingSkeleton';
 import { EmptyState } from '@/components/ui/EmptyState';
-import { Pagination } from '@/components/ui/Pagination';
 
 type SortMode = 'name' | 'newest';
 
@@ -22,24 +21,59 @@ export default function WritersPage() {
   const [writers, setWriters] = useState<Writer[]>([]);
   const [sort, setSort] = useState<SortMode>('name');
   const [page, setPage] = useState(1);
-  const [total, setTotal] = useState(0);
+  const [hasMore, setHasMore] = useState(true);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const sentinelRef = useRef<HTMLDivElement>(null);
 
-  const pageSize = 50;
-  const totalPages = Math.ceil(total / pageSize);
+  const sortRef = useRef(sort);
 
-  const loadWriters = useCallback(async () => {
-    setLoading(true);
-    const res = await fetch(`/api/users?sort=${sort}&page=${page}`);
-    if (res.ok) {
+  const loadPage = useCallback(async (pageNum: number, sortBy: SortMode, append: boolean) => {
+    if (append) setLoadingMore(true); else setLoading(true);
+    try {
+      const res = await fetch(`/api/users?sort=${sortBy}&page=${pageNum}`);
+      if (!res.ok) throw new Error('Failed to load');
+      if (sortRef.current !== sortBy) return;
       const data = await res.json();
-      setWriters(data.writers ?? []);
-      setTotal(data.total ?? 0);
+      const newWriters = data.writers ?? [];
+      const total = data.total ?? 0;
+      if (append) {
+        setWriters(prev => [...prev, ...newWriters]);
+      } else {
+        setWriters(newWriters);
+      }
+      setHasMore(pageNum * (data.page_size ?? 100) < total);
+    } catch {
+      // ignore
     }
-    setLoading(false);
-  }, [sort, page]);
+    if (append) setLoadingMore(false); else setLoading(false);
+  }, []);
 
-  useEffect(() => { loadWriters(); }, [loadWriters]);
+  useEffect(() => {
+    sortRef.current = sort;
+    setPage(1);
+    setHasMore(true);
+    loadPage(1, sort, false);
+  }, [loadPage, sort]);
+
+  useEffect(() => {
+    if (page > 1) loadPage(page, sort, true);
+  }, [page, sort, loadPage]);
+
+  useEffect(() => {
+    const sentinel = sentinelRef.current;
+    if (!sentinel) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && hasMore && !loadingMore && !loading) {
+          setPage(p => p + 1);
+        }
+      },
+      { rootMargin: '200px' }
+    );
+    observer.observe(sentinel);
+    return () => observer.disconnect();
+  }, [hasMore, loadingMore, loading]);
 
   return (
     <div>
@@ -49,7 +83,7 @@ export default function WritersPage() {
         {(['name', 'newest'] as const).map((s) => (
           <button
             key={s}
-            onClick={() => { setSort(s); setPage(1); }}
+            onClick={() => setSort(s)}
             className={`px-4 py-2 text-sm rounded-full transition-colors ${
               sort === s
                 ? 'bg-indigo-600 text-white'
@@ -101,7 +135,11 @@ export default function WritersPage() {
         </div>
       )}
 
-      <Pagination page={page} totalPages={totalPages} onPageChange={setPage} />
+      {hasMore && writers.length > 0 && (
+        <div ref={sentinelRef} className="py-4">
+          {loadingMore && <LoadingSkeleton count={3} height="h-14" />}
+        </div>
+      )}
     </div>
   );
 }
