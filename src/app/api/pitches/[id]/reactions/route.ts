@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
-import { badRequest, notFound, unauthorized, forbidden, safeJson } from '@/lib/api-error';
+import { badRequest, notFound, unauthorized, forbidden, serverError, safeJson } from '@/lib/api-error';
 import { rateLimit } from '@/lib/rate-limit';
 
 export async function POST(
@@ -56,7 +56,7 @@ export async function POST(
       .eq('pitch_id', pitchId)
       .eq('user_id', user.id)
       .eq('reaction_type', reaction_type);
-    if (delError) return badRequest('Failed to remove reaction');
+    if (delError) return serverError('Failed to remove reaction');
     return NextResponse.json({ reaction: null });
   }
 
@@ -70,7 +70,7 @@ export async function POST(
     .select()
     .single();
 
-  if (error) return badRequest('Failed to save reaction');
+  if (error) return serverError('Failed to save reaction');
   return NextResponse.json({ reaction: upserted });
 }
 
@@ -89,7 +89,7 @@ export async function DELETE(
     .eq('pitch_id', pitchId)
     .eq('user_id', user.id);
 
-  if (error) return badRequest('Failed to remove reaction');
+  if (error) return serverError('Failed to remove reaction');
 
   return NextResponse.json({ success: true });
 }

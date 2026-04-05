@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback, useRef } from 'react';
 import Link from 'next/link';
 import { LoadingSkeleton } from '@/components/ui/LoadingSkeleton';
 import { EmptyState } from '@/components/ui/EmptyState';
+import { useInfiniteScroll } from '@/hooks/useInfiniteScroll';
 
 type SortMode = 'name' | 'newest';
 
@@ -24,7 +25,10 @@ export default function WritersPage() {
   const [hasMore, setHasMore] = useState(true);
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
-  const sentinelRef = useRef<HTMLDivElement>(null);
+  const sentinelRef = useInfiniteScroll(
+    () => setPage(p => p + 1),
+    hasMore && !loadingMore && !loading,
+  );
 
   const sortRef = useRef(sort);
 
@@ -60,21 +64,6 @@ export default function WritersPage() {
   useEffect(() => {
     if (page > 1) loadPage(page, sort, true);
   }, [page, sort, loadPage]);
-
-  useEffect(() => {
-    const sentinel = sentinelRef.current;
-    if (!sentinel) return;
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (entries[0].isIntersecting && hasMore && !loadingMore && !loading) {
-          setPage(p => p + 1);
-        }
-      },
-      { rootMargin: '200px' }
-    );
-    observer.observe(sentinel);
-    return () => observer.disconnect();
-  }, [hasMore, loadingMore, loading]);
 
   return (
     <div>

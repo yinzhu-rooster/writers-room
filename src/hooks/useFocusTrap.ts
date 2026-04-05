@@ -6,10 +6,11 @@ const FOCUSABLE = 'a[href], button:not([disabled]), input:not([disabled]), selec
  * Traps keyboard focus within a modal element.
  * Returns a ref to attach to the modal container.
  */
-export function useFocusTrap<T extends HTMLElement = HTMLDivElement>() {
+export function useFocusTrap<T extends HTMLElement = HTMLDivElement>(enabled = true) {
   const ref = useRef<T>(null);
 
   useEffect(() => {
+    if (!enabled) return;
     const el = ref.current;
     if (!el) return;
 
@@ -46,7 +47,7 @@ export function useFocusTrap<T extends HTMLElement = HTMLDivElement>() {
       document.removeEventListener('keydown', handleKeyDown);
       previouslyFocused?.focus();
     };
-  }, []);
+  }, [enabled]);
 
   return ref;
 }

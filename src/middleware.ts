@@ -1,5 +1,4 @@
 import { createServerClient } from '@supabase/ssr';
-import { createClient } from '@supabase/supabase-js';
 import { NextResponse, type NextRequest } from 'next/server';
 
 export async function middleware(request: NextRequest) {
@@ -8,10 +7,9 @@ export async function middleware(request: NextRequest) {
   try {
     const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
     const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-    const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-    if (!url || !anonKey || !serviceKey) {
+    if (!url || !anonKey) {
       console.error('Missing Supabase environment variables');
-      return supabaseResponse;
+      return new NextResponse('Internal Server Error', { status: 500 });
     }
 
     const supabase = createServerClient(url, anonKey, {
@@ -31,58 +29,44 @@ export async function middleware(request: NextRequest) {
     // Refresh session
     const { data: { user } } = await supabase.auth.getUser();
 
-    // Sync users row (idempotent upsert) — uses service role to bypass RLS
+    const pathname = request.nextUrl.pathname;
+
     if (user) {
-      const admin = createClient(url, serviceKey);
+      // Check onboarding status via a lightweight query (no service role needed)
+      const hasUsername = request.cookies.get('has_username')?.value === '1';
 
-      const { data: existingUser } = await admin
-        .from('users')
-        .select('id, username')
-        .eq('id', user.id)
-        .single();
-
-      let hasUsername = false;
-
-      if (!existingUser) {
-        if (!user.email) {
-          console.error('User has no email, cannot create profile:', user.id);
-          return supabaseResponse;
-        }
-        await admin.from('users').insert({
-          id: user.id,
-          email: user.email,
-          avatar_url: user.user_metadata?.avatar_url ?? null,
-        });
-        hasUsername = false;
-      } else {
-        hasUsername = !!existingUser.username;
-      }
-
-      // Redirect to onboarding if no username
-      const pathname = request.nextUrl.pathname;
       if (
         !hasUsername &&
         !pathname.startsWith('/onboarding') &&
         !pathname.startsWith('/api/')
       ) {
-        const redirectUrl = new URL('/onboarding', request.url);
-        const redirectResponse = NextResponse.redirect(redirectUrl);
-        // Carry over cookies from supabaseResponse so session is preserved
-        supabaseResponse.cookies.getAll().forEach((cookie) => {
-          redirectResponse.cookies.set(cookie.name, cookie.value);
-        });
-        return redirectResponse;
+        // Verify against DB in case cookie is stale
+        const { data: profile } = await supabase
+          .from('users')
+          .select('username')
+          .eq('id', user.id)
+          .single();
+
+        if (profile?.username) {
+          // Set cookie so we skip this check next time
+          supabaseResponse.cookies.set('has_username', '1', { path: '/', httpOnly: true, sameSite: 'lax', maxAge: 60 * 60 * 24 * 365 });
+        } else {
+          const redirectUrl = new URL('/onboarding', request.url);
+          const redirectResponse = NextResponse.redirect(redirectUrl);
+          supabaseResponse.cookies.getAll().forEach((cookie) => {
+            redirectResponse.cookies.set(cookie.name, cookie.value);
+          });
+          return redirectResponse;
+        }
       }
     }
 
     // Protect Open Topics (main page) — redirect visitors to /closed
-    const pathname = request.nextUrl.pathname;
     if (pathname === '/' && !user) {
       return NextResponse.redirect(new URL('/closed', request.url));
     }
   } catch (e) {
     console.error('Middleware error:', e);
-    // Return 500 instead of silently passing through on auth errors
     return new NextResponse('Internal Server Error', { status: 500 });
   }
 

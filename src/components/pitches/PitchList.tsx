@@ -80,12 +80,18 @@ export function PitchList({ promptId, isOpen, refreshKey }: PitchListProps) {
 
   const handleDelete = async (pitchId: string) => {
     if (!window.confirm('Delete this pitch? This cannot be undone.')) return;
-    const res = await fetch(`/api/pitches/${pitchId}`, { method: 'DELETE' });
-    if (res.ok) {
-      showToast('Pitch deleted');
-      setPage(1);
-      setHasMore(true);
-      loadPage(1, false);
+    try {
+      const res = await fetch(`/api/pitches/${pitchId}`, { method: 'DELETE' });
+      if (res.ok) {
+        showToast('Pitch deleted');
+        setPage(1);
+        setHasMore(true);
+        loadPage(1, false);
+      } else {
+        showToast('Failed to delete pitch', 'error');
+      }
+    } catch {
+      showToast('Network error — please try again', 'error');
     }
   };
 

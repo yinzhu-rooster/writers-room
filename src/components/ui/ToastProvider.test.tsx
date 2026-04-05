@@ -44,7 +44,7 @@ describe('ToastProvider', () => {
 
     await user.click(screen.getByText('Show Error'));
     const toast = screen.getByText('Error toast');
-    expect(toast.closest('[role="status"]')?.className).toContain('bg-red-600');
+    expect(toast.closest('[role="alert"]')?.className).toContain('bg-red-600');
   });
 
   it('removes toast after timeout', async () => {

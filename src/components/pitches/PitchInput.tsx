@@ -21,24 +21,29 @@ export function PitchInput({ promptId, onSubmitted }: PitchInputProps) {
     setError('');
     setLoading(true);
 
-    const res = await fetch(`/api/prompts/${promptId}/pitches`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ body: body.trim() }),
-    });
+    try {
+      const res = await fetch(`/api/prompts/${promptId}/pitches`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ body: body.trim() }),
+      });
 
-    const data = await res.json();
-    if (!res.ok) {
-      setError(data.error);
-      showToast(data.error, 'error');
+      const data = await res.json();
+      if (!res.ok) {
+        setError(data.error);
+        showToast(data.error, 'error');
+        return;
+      }
+
+      setBody('');
+      showToast('Pitch submitted!');
+      onSubmitted();
+    } catch {
+      setError('Network error');
+      showToast('Network error — please try again', 'error');
+    } finally {
       setLoading(false);
-      return;
     }
-
-    setBody('');
-    setLoading(false);
-    showToast('Pitch submitted!');
-    onSubmitted();
   };
 
   return (
@@ -49,6 +54,7 @@ export function PitchInput({ promptId, onSubmitted }: PitchInputProps) {
         rows={3}
         maxLength={1000}
         placeholder="Write your pitch..."
+        aria-label="Write your pitch"
         className="w-full rounded-lg border border-gray-300 px-3 py-2 text-gray-900 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none resize-none"
       />
       <div className="flex items-center justify-between mt-2">

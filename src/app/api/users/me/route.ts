@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
-import { badRequest, unauthorized, safeJson } from '@/lib/api-error';
+import { badRequest, unauthorized, serverError, safeJson } from '@/lib/api-error';
 import { z } from 'zod';
 import { usernameSchema } from '@/lib/validators/username';
 
 const updateProfileSchema = z.object({
   username: usernameSchema.optional(),
-  avatar_url: z.string().url().nullable().optional(),
+  avatar_url: z.string().url().refine(u => u.startsWith('https://'), { message: 'Avatar URL must use HTTPS' }).nullable().optional(),
 });
 
 export async function PATCH(request: NextRequest) {
@@ -36,7 +36,7 @@ export async function PATCH(request: NextRequest) {
 
   if (error) {
     if (error.code === '23505') return badRequest('Username already taken');
-    return badRequest('Failed to update profile');
+    return serverError('Failed to update profile');
   }
 
   return NextResponse.json(data);

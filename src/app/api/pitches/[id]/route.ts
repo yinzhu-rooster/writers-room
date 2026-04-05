@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { updatePitchSchema } from '@/lib/validators/pitch';
-import { badRequest, unauthorized, forbidden, notFound, safeJson } from '@/lib/api-error';
+import { badRequest, unauthorized, forbidden, notFound, serverError, safeJson } from '@/lib/api-error';
 import { EDIT_WINDOW_MS } from '@/lib/constants';
 
 export async function PATCH(
@@ -52,7 +52,7 @@ export async function PATCH(
     .select()
     .single();
 
-  if (error) return badRequest('Failed to update pitch');
+  if (error) return serverError('Failed to update pitch');
 
   return NextResponse.json(updated);
 }
@@ -87,7 +87,7 @@ export async function DELETE(
     .eq('id', id)
     .eq('user_id', user.id);
 
-  if (error) return badRequest('Failed to delete pitch');
+  if (error) return serverError('Failed to delete pitch');
 
   return NextResponse.json({ success: true });
 }

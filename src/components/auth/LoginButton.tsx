@@ -52,8 +52,12 @@ export function LoginButton() {
 
   useEffect(() => {
     if (showForm) {
+      document.body.style.overflow = 'hidden';
       document.addEventListener('keydown', handleEscape);
-      return () => document.removeEventListener('keydown', handleEscape);
+      return () => {
+        document.body.style.overflow = '';
+        document.removeEventListener('keydown', handleEscape);
+      };
     }
   }, [showForm, handleEscape]);
 

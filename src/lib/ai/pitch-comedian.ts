@@ -56,8 +56,12 @@ export function generateComedianPitches(
     const roll = rand();
     const count = roll < 0.5 ? 1 : roll < 0.85 ? 2 : 3;
 
-    // Pick unique pitches from pool
-    const shuffled = [...pool].sort(() => rand() - 0.5);
+    // Pick unique pitches from pool (Fisher-Yates shuffle for uniform distribution)
+    const shuffled = [...pool];
+    for (let i = shuffled.length - 1; i > 0; i--) {
+      const j = Math.floor(rand() * (i + 1));
+      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    }
     const selected = shuffled.slice(0, Math.min(count, pool.length));
 
     for (const body of selected) {

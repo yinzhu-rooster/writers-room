@@ -20,19 +20,24 @@ export function FlagButton({ type, targetId }: FlagButtonProps) {
       ? `/api/pitches/${targetId}/flags`
       : `/api/prompts/${targetId}/flags`;
 
-    const res = await fetch(url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ reason }),
-    });
+    try {
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ reason }),
+      });
 
-    if (res.ok || res.status === 409) {
-      setFlagged(true);
-      showToast('Content flagged for review');
-    } else {
-      showToast('Failed to flag content', 'error');
+      if (res.ok || res.status === 409) {
+        setFlagged(true);
+        showToast('Content flagged for review');
+      } else {
+        showToast('Failed to flag content', 'error');
+      }
+    } catch {
+      showToast('Network error — please try again', 'error');
+    } finally {
+      setShowPicker(false);
     }
-    setShowPicker(false);
   };
 
   if (flagged) {
@@ -43,6 +48,8 @@ export function FlagButton({ type, targetId }: FlagButtonProps) {
     <div className="relative">
       <button
         onClick={() => setShowPicker(!showPicker)}
+        aria-expanded={showPicker}
+        aria-haspopup="true"
         className="text-xs text-gray-400 hover:text-red-500 transition-colors"
       >
         Flag

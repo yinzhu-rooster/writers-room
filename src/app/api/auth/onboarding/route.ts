@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
-import { badRequest, unauthorized, safeJson } from '@/lib/api-error';
+import { badRequest, unauthorized, serverError, safeJson } from '@/lib/api-error';
 import { usernameSchema } from '@/lib/validators/username';
 
 export async function POST(request: NextRequest) {
@@ -20,13 +20,15 @@ export async function POST(request: NextRequest) {
   const admin = createAdminClient();
   const { error } = await admin
     .from('users')
-    .update({ username: trimmed })
+    .update({ username: parsed.data })
     .eq('id', user.id);
 
   if (error) {
     if (error.code === '23505') return badRequest('Username already taken');
-    return badRequest('Failed to set username');
+    return serverError('Failed to set username');
   }
 
-  return NextResponse.json({ success: true });
+  const response = NextResponse.json({ success: true });
+  response.cookies.set('has_username', '1', { path: '/', httpOnly: true, sameSite: 'lax', maxAge: 60 * 60 * 24 * 365 });
+  return response;
 }

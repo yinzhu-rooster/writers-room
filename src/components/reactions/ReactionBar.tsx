@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import type { ReactionType } from '@/types/enums';
 
 const REACTIONS: { type: ReactionType; emoji: string; label: string }[] = [
@@ -18,6 +18,12 @@ interface ReactionBarProps {
 export function ReactionBar({ pitchId, myReaction, onChange }: ReactionBarProps) {
   const [current, setCurrent] = useState<ReactionType | null>(myReaction);
   const [loading, setLoading] = useState(false);
+
+  // Sync local state when prop changes (e.g. after refetch)
+  useEffect(() => {
+    setCurrent(myReaction);
+  }, [myReaction]);
+
   // Use ref for previous value to avoid stale closure issues
   const currentRef = useRef(current);
   currentRef.current = current;
@@ -32,18 +38,22 @@ export function ReactionBar({ pitchId, myReaction, onChange }: ReactionBarProps)
     const newReaction = previous === type ? null : type;
     setCurrent(newReaction);
 
-    const res = await fetch(`/api/pitches/${pitchId}/reactions`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ reaction_type: type }),
-    });
+    try {
+      const res = await fetch(`/api/pitches/${pitchId}/reactions`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ reaction_type: type }),
+      });
 
-    if (!res.ok) {
-      setCurrent(previous); // Revert to captured value
+      if (!res.ok) {
+        setCurrent(previous); // Revert to captured value
+      }
+    } catch {
+      setCurrent(previous); // Revert on network error
+    } finally {
+      setLoading(false);
+      onChangeRef.current?.();
     }
-
-    setLoading(false);
-    onChangeRef.current?.();
   }, [pitchId]);
 
   return (

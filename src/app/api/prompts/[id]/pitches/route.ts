@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { createPitchSchema } from '@/lib/validators/pitch';
-import { badRequest, notFound, unauthorized, safeJson } from '@/lib/api-error';
+import { badRequest, notFound, unauthorized, serverError, safeJson } from '@/lib/api-error';
 import { getConfigInt } from '@/lib/config';
 import { serializePitch } from '@/lib/serialize-pitch';
 import { rateLimit } from '@/lib/rate-limit';
@@ -19,7 +19,7 @@ export async function GET(
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   const { searchParams } = new URL(request.url);
-  const page = Math.max(1, Math.min(parseInt(searchParams.get('page') ?? '1', 10), MAX_PAGE));
+  const page = Math.max(1, Math.min(parseInt(searchParams.get('page') ?? '1', 10) || 1, MAX_PAGE));
   const offset = (page - 1) * PAGE_SIZE;
 
   // Get prompt to check status
@@ -50,7 +50,7 @@ export async function GET(
   const { data: pitches, count, error } = await query;
   if (error) {
     console.error('Pitches load error:', error.message, error.details, error.code);
-    return badRequest('Failed to load pitches');
+    return serverError('Failed to load pitches');
   }
 
   const minReactionsForReveal = isOpen ? 0 : await getConfigInt('min_reactions_for_reveal');
@@ -129,7 +129,7 @@ export async function POST(
 
   if (error) {
     console.error('Pitch insert error:', error.message, error.details, error.code);
-    return badRequest('Failed to create pitch');
+    return serverError('Failed to create pitch');
   }
 
   return NextResponse.json(pitch, { status: 201 });

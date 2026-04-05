@@ -15,7 +15,12 @@ export async function getConfigValue(key: string): Promise<string> {
     .eq('key', key)
     .single();
 
-  return data?.value ?? CONFIG_DEFAULTS[key] ?? '';
+  const value = data?.value ?? CONFIG_DEFAULTS[key];
+  if (value === undefined) {
+    console.warn(`Unknown config key "${key}" with no default`);
+    return '';
+  }
+  return value;
 }
 
 export async function getConfigInt(key: string): Promise<number> {

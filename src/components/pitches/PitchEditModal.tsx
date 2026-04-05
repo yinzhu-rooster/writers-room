@@ -24,8 +24,12 @@ export function PitchEditModal({ pitchId, initialBody, onClose, onSaved }: Pitch
   }, [onClose]);
 
   useEffect(() => {
+    document.body.style.overflow = 'hidden';
     document.addEventListener('keydown', handleEscape);
-    return () => document.removeEventListener('keydown', handleEscape);
+    return () => {
+      document.body.style.overflow = '';
+      document.removeEventListener('keydown', handleEscape);
+    };
   }, [handleEscape]);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -33,22 +37,27 @@ export function PitchEditModal({ pitchId, initialBody, onClose, onSaved }: Pitch
     setError('');
     setLoading(true);
 
-    const res = await fetch(`/api/pitches/${pitchId}`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ body: body.trim() }),
-    });
+    try {
+      const res = await fetch(`/api/pitches/${pitchId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ body: body.trim() }),
+      });
 
-    const data = await res.json();
-    if (!res.ok) {
-      setError(data.error);
+      const data = await res.json();
+      if (!res.ok) {
+        setError(data.error);
+        return;
+      }
+
+      showToast('Pitch updated');
+      onSaved();
+      onClose();
+    } catch {
+      setError('Network error — please try again');
+    } finally {
       setLoading(false);
-      return;
     }
-
-    showToast('Pitch updated');
-    onSaved();
-    onClose();
   };
 
   return (

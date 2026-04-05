@@ -76,9 +76,10 @@ export function PitchCard({ pitch, isOpen, onReactionChange, onEdit, onDelete }:
               ...
             </button>
             {showActions && (
-              <div className="absolute right-0 mt-1 w-32 bg-white border border-gray-200 rounded-lg shadow-lg z-10">
+              <div role="menu" className="absolute right-0 mt-1 w-32 bg-white border border-gray-200 rounded-lg shadow-lg z-10">
                 {canEdit && (
                   <button
+                    role="menuitem"
                     onClick={() => { onEdit?.(pitch.id, pitch.body); setShowActions(false); }}
                     className="block w-full text-left px-3 py-3 text-sm hover:bg-gray-50"
                   >
@@ -87,6 +88,7 @@ export function PitchCard({ pitch, isOpen, onReactionChange, onEdit, onDelete }:
                 )}
                 {canDelete && (
                   <button
+                    role="menuitem"
                     onClick={() => { onDelete?.(pitch.id); setShowActions(false); }}
                     className="block w-full text-left px-3 py-3 text-sm text-red-600 hover:bg-gray-50"
                   >

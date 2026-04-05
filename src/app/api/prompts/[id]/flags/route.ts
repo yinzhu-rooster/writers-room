@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
-import { badRequest, notFound, unauthorized, conflict, safeJson } from '@/lib/api-error';
+import { badRequest, notFound, unauthorized, conflict, serverError, safeJson } from '@/lib/api-error';
 import { rateLimit } from '@/lib/rate-limit';
 
 export async function POST(
@@ -40,7 +40,7 @@ export async function POST(
 
   if (error) {
     if (error.code === '23505') return conflict('Already flagged');
-    return badRequest('Failed to flag prompt');
+    return serverError('Failed to flag prompt');
   }
 
   return NextResponse.json({ success: true }, { status: 201 });

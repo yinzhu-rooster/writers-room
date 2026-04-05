@@ -28,9 +28,9 @@ export function Toast({ message, type = 'success', onClose }: ToastProps) {
 
   return (
     <div
-      role="status"
-      aria-live="polite"
-      className={`fixed bottom-24 md:bottom-8 left-1/2 -translate-x-1/2 z-50 rounded-lg px-4 py-2.5 text-sm text-white shadow-lg transition-opacity duration-300 ${bgColor} ${
+      role={type === 'error' ? 'alert' : 'status'}
+      aria-live={type === 'error' ? 'assertive' : 'polite'}
+      className={`rounded-lg px-4 py-2.5 text-sm text-white shadow-lg transition-opacity duration-300 pointer-events-auto ${bgColor} ${
         visible ? 'opacity-100' : 'opacity-0'
       }`}
     >

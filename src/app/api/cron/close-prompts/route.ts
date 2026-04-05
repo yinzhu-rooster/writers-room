@@ -11,12 +11,13 @@ export async function POST(request: NextRequest) {
   const supabase = createAdminClient();
   const now = new Date().toISOString();
 
-  // Find unprocessed closed prompts
+  // Find unprocessed closed prompts (batch to avoid timeout on backlog)
   const { data: prompts } = await supabase
     .from('prompts')
     .select('id')
     .lte('closes_at', now)
-    .eq('is_closed_processed', false);
+    .eq('is_closed_processed', false)
+    .limit(50);
 
   if (!prompts || prompts.length === 0) {
     return NextResponse.json({ processed: 0 });
@@ -43,29 +44,35 @@ export async function POST(request: NextRequest) {
 
     if (pitches && pitches.length > 0) {
       const ranked = rankPitches(pitches);
+      const pitchMap = new Map(pitches.map(p => [p.id, p]));
 
-      // Update each pitch with rank and reveal status
-      for (const rp of ranked) {
-        const pitch = pitches.find((p) => p.id === rp.id);
-        if (!pitch) continue;
-        const { error: updateError } = await supabase
-          .from('pitches')
-          .update({
-            rank: rp.rank,
-            is_revealed: pitch.total_reaction_count >= threshold,
-          })
-          .eq('id', rp.id);
-        if (updateError) {
-          console.error(`Failed to update pitch ${rp.id}:`, updateError.message);
-        }
+      // Batch update pitches with rank and reveal status
+      const updates = ranked.map((rp) => {
+        const pitch = pitchMap.get(rp.id);
+        return {
+          id: rp.id,
+          rank: rp.rank,
+          is_revealed: (pitch?.total_reaction_count ?? 0) >= threshold,
+        };
+      });
+
+      // Use Promise.all for parallel updates (Supabase doesn't support batch upsert on different values per row)
+      const results = await Promise.all(
+        updates.map(u =>
+          supabase.from('pitches').update({ rank: u.rank, is_revealed: u.is_revealed }).eq('id', u.id)
+        )
+      );
+      for (const { error: updateError } of results) {
+        if (updateError) console.error('Failed to update pitch:', updateError.message);
       }
     }
 
     // Mark prompt as processed
-    await supabase
+    const { error: markError } = await supabase
       .from('prompts')
       .update({ is_closed_processed: true })
       .eq('id', prompt.id);
+    if (markError) console.error(`Failed to mark prompt ${prompt.id} as processed:`, markError.message);
 
     processed++;
   }

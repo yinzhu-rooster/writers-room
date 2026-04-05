@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { createPromptSchema } from '@/lib/validators/prompt';
-import { badRequest, unauthorized, safeJson } from '@/lib/api-error';
+import { badRequest, unauthorized, serverError, safeJson } from '@/lib/api-error';
 import { rateLimit } from '@/lib/rate-limit';
 import { MAX_PAGE } from '@/lib/constants';
 
@@ -12,7 +12,7 @@ export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const status = searchParams.get('status') ?? 'open';
   const sort = searchParams.get('sort') ?? 'newest';
-  const page = Math.max(1, Math.min(parseInt(searchParams.get('page') ?? '1', 10), MAX_PAGE));
+  const page = Math.max(1, Math.min(parseInt(searchParams.get('page') ?? '1', 10) || 1, MAX_PAGE));
   const offset = (page - 1) * PAGE_SIZE;
 
   const { data: { user } } = await supabase.auth.getUser();
@@ -42,7 +42,7 @@ export async function GET(request: NextRequest) {
 
   const { data: prompts, count, error } = await query;
 
-  if (error) return badRequest('Failed to load prompts');
+  if (error) return serverError('Failed to load prompts');
 
   // For closed prompts, fetch stats (unique writers + total reactions) via RPC
   const statsMap = new Map<string, { unique_writers: number; total_reactions: number }>();
@@ -135,7 +135,7 @@ export async function POST(request: NextRequest) {
     .select()
     .single();
 
-  if (error) return badRequest('Failed to create prompt');
+  if (error) return serverError('Failed to create prompt');
 
   return NextResponse.json(prompt, { status: 201 });
 }

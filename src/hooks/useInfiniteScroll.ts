@@ -32,7 +32,7 @@ export function useInfiniteScroll(
 
     observer.observe(sentinel);
     return () => observer.disconnect();
-  }, []);
+  }, [enabled]);
 
   return sentinelRef;
 }

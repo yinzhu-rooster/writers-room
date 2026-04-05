@@ -40,3 +40,7 @@ export function notFound(message = 'Not found') {
 export function conflict(message: string, code?: string) {
   return apiError(message, 409, code);
 }
+
+export function serverError(message = 'Internal server error') {
+  return apiError(message, 500);
+}

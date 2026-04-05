@@ -18,73 +18,57 @@ export async function GET(
 
   if (!user) return notFound('User not found');
 
-  // Pitch count (non-deleted)
-  const { count: pitchCount } = await supabase
-    .from('pitches')
-    .select('*', { count: 'exact', head: true })
-    .eq('user_id', id)
-    .is('deleted_at', null);
-
-  // Topics created count (all)
-  const { count: topicsCreated } = await supabase
-    .from('prompts')
-    .select('*', { count: 'exact', head: true })
-    .eq('created_by', id);
-
-  // Closed topics created by this user (public — open topics stay anonymous)
   const now = new Date().toISOString();
-  const { data: closedTopics } = await supabase
-    .from('prompts')
-    .select('id, body, prompt_type, submission_count, closes_at, created_at')
-    .eq('created_by', id)
-    .lte('closes_at', now)
-    .order('closes_at', { ascending: false })
-    .limit(50);
 
-  // Best finish
-  const { data: bestFinish } = await supabase
-    .from('pitches')
-    .select('rank')
-    .eq('user_id', id)
-    .is('deleted_at', null)
-    .not('rank', 'is', null)
-    .order('rank', { ascending: true })
-    .limit(1)
-    .single();
-
-  // Total reactions received — use SUM via aggregate instead of fetching all rows
-  const { data: reactionAgg } = await supabase
-    .from('pitches')
-    .select('laugh_count.sum(), smile_count.sum(), surprise_count.sum()')
-    .eq('user_id', id)
-    .is('deleted_at', null)
-    .single();
-
-  const reactions = {
-    laughs: reactionAgg?.sum ?? 0,
-    smiles: reactionAgg?.sum ?? 0,
-    surprises: reactionAgg?.sum ?? 0,
-  };
-
-  // Fallback: if aggregate syntax isn't supported, use the old approach with a limit
-  if (!reactionAgg) {
-    const { data: reactionTotals } = await supabase
+  // Run independent queries in parallel
+  const [
+    { count: pitchCount },
+    { count: topicsCreated },
+    { data: closedTopics },
+    { data: bestFinish },
+    { data: reactionTotals },
+  ] = await Promise.all([
+    supabase
+      .from('pitches')
+      .select('*', { count: 'exact', head: true })
+      .eq('user_id', id)
+      .is('deleted_at', null),
+    supabase
+      .from('prompts')
+      .select('*', { count: 'exact', head: true })
+      .eq('created_by', id),
+    supabase
+      .from('prompts')
+      .select('id, body, prompt_type, submission_count, closes_at, created_at')
+      .eq('created_by', id)
+      .lte('closes_at', now)
+      .order('closes_at', { ascending: false })
+      .limit(50),
+    supabase
+      .from('pitches')
+      .select('rank')
+      .eq('user_id', id)
+      .is('deleted_at', null)
+      .not('rank', 'is', null)
+      .order('rank', { ascending: true })
+      .limit(1)
+      .single(),
+    supabase
       .from('pitches')
       .select('laugh_count, smile_count, surprise_count')
       .eq('user_id', id)
       .is('deleted_at', null)
-      .limit(1000);
+      .limit(1000),
+  ]);
 
-    const totals = (reactionTotals ?? []).reduce(
-      (acc, p) => ({
-        laughs: acc.laughs + p.laugh_count,
-        smiles: acc.smiles + p.smile_count,
-        surprises: acc.surprises + p.surprise_count,
-      }),
-      { laughs: 0, smiles: 0, surprises: 0 }
-    );
-    Object.assign(reactions, totals);
-  }
+  const reactions = (reactionTotals ?? []).reduce(
+    (acc, p) => ({
+      laughs: acc.laughs + (p.laugh_count ?? 0),
+      smiles: acc.smiles + (p.smile_count ?? 0),
+      surprises: acc.surprises + (p.surprise_count ?? 0),
+    }),
+    { laughs: 0, smiles: 0, surprises: 0 }
+  );
 
   return NextResponse.json({
     user,

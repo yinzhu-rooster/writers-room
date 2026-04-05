@@ -34,8 +34,25 @@ export async function GET(request: Request) {
       }
     );
 
-    const { error } = await supabase.auth.exchangeCodeForSession(code);
-    if (!error) {
+    const { data: session, error } = await supabase.auth.exchangeCodeForSession(code);
+    if (!error && session?.user) {
+      // Sync user row on login (runs once per login, not every request)
+      const { createAdminClient } = await import('@/lib/supabase/admin');
+      const admin = createAdminClient();
+      const { data: existing } = await admin
+        .from('users')
+        .select('id')
+        .eq('id', session.user.id)
+        .single();
+
+      if (!existing && session.user.email) {
+        await admin.from('users').insert({
+          id: session.user.id,
+          email: session.user.email,
+          avatar_url: session.user.user_metadata?.avatar_url ?? null,
+        }).single();
+      }
+
       return NextResponse.redirect(`${origin}${next}`);
     }
   }

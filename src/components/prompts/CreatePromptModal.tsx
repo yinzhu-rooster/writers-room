@@ -25,8 +25,16 @@ export function CreatePromptModal({ open, onClose, onCreated }: CreatePromptModa
 
   useEffect(() => {
     if (open) {
+      // Reset form state on open
+      setBody('');
+      setDurationHours(24);
+      setError('');
+      document.body.style.overflow = 'hidden';
       document.addEventListener('keydown', handleEscape);
-      return () => document.removeEventListener('keydown', handleEscape);
+      return () => {
+        document.body.style.overflow = '';
+        document.removeEventListener('keydown', handleEscape);
+      };
     }
   }, [open, handleEscape]);
 
@@ -37,30 +45,34 @@ export function CreatePromptModal({ open, onClose, onCreated }: CreatePromptModa
     setError('');
     setLoading(true);
 
-    const res = await fetch('/api/prompts', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        body: body.trim(),
-        prompt_type: 'evergreen',
-        duration_hours: durationHours,
-      }),
-    });
+    try {
+      const res = await fetch('/api/prompts', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          body: body.trim(),
+          prompt_type: 'evergreen',
+          duration_hours: durationHours,
+        }),
+      });
 
-    const data = await res.json();
-    if (!res.ok) {
-      setError(data.error);
+      const data = await res.json();
+      if (!res.ok) {
+        setError(data.error);
+        return;
+      }
+
+      setBody('');
+      setDurationHours(24);
+      setError('');
+      showToast('Prompt created!');
+      onCreated();
+      onClose();
+    } catch {
+      setError('Network error — please try again');
+    } finally {
       setLoading(false);
-      return;
     }
-
-    setBody('');
-    setDurationHours(24);
-    setError('');
-    setLoading(false);
-    showToast('Prompt created!');
-    onCreated();
-    onClose();
   };
 
   return (

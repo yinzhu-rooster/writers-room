@@ -15,7 +15,7 @@ export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const rawSort = searchParams.get('sort') ?? 'total_laughs';
   const sort: SortMode = VALID_SORTS.includes(rawSort as SortMode) ? rawSort as SortMode : 'total_laughs';
-  const page = Math.max(1, Math.min(parseInt(searchParams.get('page') ?? '1', 10), MAX_PAGE));
+  const page = Math.max(1, Math.min(parseInt(searchParams.get('page') ?? '1', 10) || 1, MAX_PAGE));
   const offset = (page - 1) * PAGE_SIZE;
 
   if (sort === 'total_laughs' || sort === 'total_reps') {
@@ -35,10 +35,12 @@ export async function GET(request: NextRequest) {
   }
 
   // For avg_laughs and top3_pct, compute on-read
-  // Get all users with enough pitches
+  // Limit to top 1000 users by total_laughs to avoid loading entire table
   const { data: users } = await supabase
     .from('users')
-    .select('id, username, avatar_url, total_laughs, total_reps');
+    .select('id, username, avatar_url, total_laughs, total_reps')
+    .order('total_laughs', { ascending: false })
+    .limit(1000);
 
   if (!users) return NextResponse.json({ leaderboard: [], total: 0, page, page_size: PAGE_SIZE, sort });
 

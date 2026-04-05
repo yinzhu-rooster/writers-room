@@ -30,7 +30,8 @@ describe('Toast', () => {
 
   it('applies red background for error type', () => {
     render(<Toast message="Fail" type="error" onClose={() => {}} />);
-    const el = screen.getByRole('status');
+    const el = screen.getByRole('alert');
+    expect(el).toHaveAttribute('aria-live', 'assertive');
     expect(el.className).toContain('bg-red-600');
   });
 

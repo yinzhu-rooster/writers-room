@@ -7,7 +7,7 @@ export async function GET(request: NextRequest) {
   const supabase = await createClient();
   const { searchParams } = new URL(request.url);
   const sort = searchParams.get('sort') ?? 'name';
-  const page = Math.max(1, Math.min(parseInt(searchParams.get('page') ?? '1', 10), 1000));
+  const page = Math.max(1, Math.min(parseInt(searchParams.get('page') ?? '1', 10) || 1, 1000));
   const offset = (page - 1) * PAGE_SIZE;
 
   let query = supabase
