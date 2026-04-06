@@ -17,8 +17,11 @@ import { v5 as uuidv5 } from 'uuid';
 import { spawn } from 'child_process';
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL ?? 'http://127.0.0.1:54321';
-const SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
-if (!SERVICE_KEY) throw new Error('SUPABASE_SERVICE_ROLE_KEY env var is required');
+const SERVICE_KEY: string = (() => {
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!key) throw new Error('SUPABASE_SERVICE_ROLE_KEY is required');
+  return key;
+})();
 const DUMP_DIR = `${__dirname}/../pitch-server/pitchprod/pitch`;
 
 const admin = createClient(SUPABASE_URL, SERVICE_KEY);
@@ -113,6 +116,7 @@ async function main() {
 
   // First pass: build user list and create auth entries
   interface UserRow {
+    [key: string]: unknown;
     id: string; username: string; email: string; avatar_url: string | null;
     is_ai: boolean; is_admin: boolean; total_reps: number; total_laughs: number; created_at: string;
   }
