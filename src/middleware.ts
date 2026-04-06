@@ -32,29 +32,24 @@ export async function middleware(request: NextRequest) {
     const pathname = request.nextUrl.pathname;
 
     if (user) {
-      // Check onboarding status via a lightweight query (no service role needed)
-      const hasUsername = request.cookies.get('has_username')?.value === '1';
-
+      // Check onboarding status — always verify against DB for authenticated users
+      // on non-API, non-onboarding pages
       if (
-        !hasUsername &&
         !pathname.startsWith('/onboarding') &&
         !pathname.startsWith('/api/')
       ) {
-        // Verify against DB in case cookie is stale
         const { data: profile } = await supabase
           .from('users')
           .select('username')
           .eq('id', user.id)
           .single();
 
-        if (profile?.username) {
-          // Set cookie so we skip this check next time
-          supabaseResponse.cookies.set('has_username', '1', { path: '/', httpOnly: true, sameSite: 'lax', maxAge: 60 * 60 * 24 * 365 });
-        } else {
+        if (!profile?.username) {
           const redirectUrl = new URL('/onboarding', request.url);
           const redirectResponse = NextResponse.redirect(redirectUrl);
+          // Copy cookies with their full attributes
           supabaseResponse.cookies.getAll().forEach((cookie) => {
-            redirectResponse.cookies.set(cookie.name, cookie.value);
+            redirectResponse.cookies.set(cookie);
           });
           return redirectResponse;
         }

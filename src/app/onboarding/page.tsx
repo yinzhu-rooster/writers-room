@@ -1,11 +1,33 @@
 'use client';
 
 import { useState } from 'react';
+import { useUser } from '@/hooks/useUser';
 
 export default function OnboardingPage() {
+  const { authUser, loading: authLoading } = useUser();
   const [username, setUsername] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+
+  if (authLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="h-8 w-8 rounded-full border-2 border-indigo-600 border-t-transparent animate-spin" />
+      </div>
+    );
+  }
+
+  if (!authUser) {
+    return (
+      <div className="min-h-screen flex items-center justify-center px-4">
+        <div className="text-center">
+          <h1 className="text-xl font-bold text-gray-900 mb-2">Sign in required</h1>
+          <p className="text-gray-500">Please sign in to complete onboarding.</p>
+          <a href="/closed" className="mt-4 inline-block text-indigo-600 hover:underline">Go to home</a>
+        </div>
+      </div>
+    );
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

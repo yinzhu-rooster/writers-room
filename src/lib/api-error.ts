@@ -13,6 +13,10 @@ export function apiError(message: string, status: number, code?: string): NextRe
  * Safely parse JSON from a request body.
  * Returns the parsed body or a 400 response if parsing fails.
  */
+export function isApiErrorResponse(value: unknown): value is NextResponse<ApiError> {
+  return value instanceof NextResponse;
+}
+
 export async function safeJson<T = unknown>(request: Request): Promise<T | NextResponse<ApiError>> {
   try {
     return await request.json() as T;

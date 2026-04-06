@@ -28,20 +28,19 @@ export function LoginButton() {
       });
       if (error) {
         setError(error.message);
+        setLoading(false);
       } else {
-        // For local dev, auto-confirm is on so this just works
         window.location.href = '/';
       }
     } else {
       const { error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) {
         setError(error.message);
+        setLoading(false);
       } else {
         window.location.href = '/';
       }
     }
-
-    setLoading(false);
   };
 
   const handleEscape = useCallback((e: KeyboardEvent) => {

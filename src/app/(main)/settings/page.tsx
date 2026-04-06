@@ -23,18 +23,23 @@ export default function SettingsPage() {
     setError('');
     setLoading(true);
 
-    const res = await fetch('/api/users/me', {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username: username.trim() }),
-    });
+    try {
+      const res = await fetch('/api/users/me', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username: username.trim() }),
+      });
 
-    const data = await res.json();
-    if (!res.ok) {
-      setError(data.error);
-      showToast(data.error, 'error');
-    } else {
-      showToast('Settings saved');
+      const data = await res.json();
+      if (!res.ok) {
+        setError(data.error);
+        showToast(data.error, 'error');
+      } else {
+        showToast('Settings saved');
+      }
+    } catch {
+      setError('Network error — please try again');
+      showToast('Network error — please try again', 'error');
     }
     setLoading(false);
   };

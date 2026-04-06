@@ -8,21 +8,34 @@ interface RateLimitEntry {
 
 const store = new Map<string, RateLimitEntry>();
 
-// Cleanup stale entries every 5 minutes
-setInterval(() => {
-  const now = Date.now();
-  for (const [key, entry] of store) {
-    if (entry.resetAt <= now) store.delete(key);
+let cleanupTimer: ReturnType<typeof setInterval> | null = null;
+
+function ensureCleanup() {
+  if (cleanupTimer || typeof setInterval === 'undefined') return;
+  cleanupTimer = setInterval(() => {
+    const now = Date.now();
+    for (const [key, entry] of store) {
+      if (entry.resetAt <= now) store.delete(key);
+    }
+    if (store.size === 0 && cleanupTimer) {
+      clearInterval(cleanupTimer);
+      cleanupTimer = null;
+    }
+  }, 5 * 60 * 1000);
+  // Allow the process to exit naturally in serverless/test environments
+  if (cleanupTimer && typeof cleanupTimer === 'object' && 'unref' in cleanupTimer) {
+    cleanupTimer.unref();
   }
-}, 5 * 60 * 1000);
+}
 
 /**
- * Simple in-memory rate limiter.
- * Returns null if allowed, or a 429 NextResponse if rate-limited.
+ * Best-effort in-memory rate limiter.
  *
- * @param key - Unique key (e.g., `userId:endpoint`)
- * @param limit - Max requests per window
- * @param windowMs - Time window in milliseconds (default 60s)
+ * NOTE: This is per-isolate only. In serverless environments (Vercel),
+ * each cold start gets its own store, so this is not a hard guarantee.
+ * For production, replace with an external store (e.g. Upstash Redis).
+ *
+ * Returns null if allowed, or a 429 NextResponse if rate-limited.
  */
 export function rateLimit(
   key: string,
@@ -34,6 +47,7 @@ export function rateLimit(
 
   if (!entry || entry.resetAt <= now) {
     store.set(key, { count: 1, resetAt: now + windowMs });
+    ensureCleanup();
     return null;
   }
 

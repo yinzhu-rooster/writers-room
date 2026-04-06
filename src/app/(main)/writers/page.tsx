@@ -25,6 +25,7 @@ export default function WritersPage() {
   const [hasMore, setHasMore] = useState(true);
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
+  const [error, setError] = useState('');
   const sentinelRef = useInfiniteScroll(
     () => setPage(p => p + 1),
     hasMore && !loadingMore && !loading,
@@ -49,6 +50,7 @@ export default function WritersPage() {
       setHasMore(pageNum * (data.page_size ?? 100) < total);
     } catch (err) {
       if (err instanceof DOMException && err.name === 'AbortError') return;
+      setError('Failed to load writers');
       console.error('Failed to load writers:', err);
     }
     if (append) setLoadingMore(false); else setLoading(false);
@@ -85,7 +87,9 @@ export default function WritersPage() {
         ))}
       </div>
 
-      {loading ? (
+      {error ? (
+        <p className="text-center text-red-600 py-6">{error}</p>
+      ) : loading ? (
         <LoadingSkeleton count={8} height="h-14" />
       ) : writers.length === 0 ? (
         <EmptyState message="No writers yet" />
@@ -98,7 +102,7 @@ export default function WritersPage() {
               className="flex items-center gap-3 rounded-lg border border-gray-200 px-4 py-3 hover:border-gray-300 hover:shadow-sm transition-all"
             >
               {w.avatar_url ? (
-                <img src={w.avatar_url} alt={w.username} className="h-9 w-9 rounded-full" />
+                <img src={w.avatar_url} alt={w.username} className="h-9 w-9 rounded-full" referrerPolicy="no-referrer" />
               ) : (
                 <div className="h-9 w-9 rounded-full bg-indigo-500 flex items-center justify-center text-white text-sm font-medium shrink-0">
                   {w.username?.[0]?.toUpperCase() ?? 'U'}

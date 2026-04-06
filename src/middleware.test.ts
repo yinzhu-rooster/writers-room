@@ -120,20 +120,9 @@ describe('middleware', () => {
     );
   });
 
-  it('does not redirect when user has username (via cookie)', async () => {
-    const mockUser = { id: 'user-1', email: 'test@example.com', user_metadata: {} };
-    const mockSupabase = makeSupabaseClient(mockUser);
-    mockCreateServerClient.mockImplementation((_url, _key, opts) => mockSupabase as any);
-
-    const request = makeRequest('/dashboard', { has_username: '1' });
-    await middleware(request);
-
-    expect(mockNextResponseRedirect).not.toHaveBeenCalled();
-  });
-
   it('does not redirect when user has username (via DB)', async () => {
     const mockUser = { id: 'user-1', email: 'test@example.com', user_metadata: {} };
-    const mockSupabase = makeSupabaseClient(mockUser, { username: 'coolwriter' });
+    const mockSupabase = makeSupabaseClient(mockUser, { username: 'testuser' });
     mockCreateServerClient.mockImplementation((_url, _key, opts) => mockSupabase as any);
 
     const request = makeRequest('/dashboard');

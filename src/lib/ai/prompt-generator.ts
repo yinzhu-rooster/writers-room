@@ -146,14 +146,29 @@ function seededRandom(seed: number): () => number {
   let s = seed;
   return () => {
     s = (s * 1664525 + 1013904223) & 0x7fffffff;
-    return s / 0x7fffffff;
+    return s / 0x80000000;
   };
 }
 
 function daySeed(): number {
   const now = new Date();
-  const et = new Date(now.toLocaleString('en-US', { timeZone: 'America/New_York' }));
+  // Compute ET offset manually to avoid locale-dependent toLocaleString parsing
+  const utc = now.getTime() + now.getTimezoneOffset() * 60_000;
+  const etOffset = isDST(now) ? -4 : -5;
+  const et = new Date(utc + etOffset * 3600_000);
   return et.getFullYear() * 10000 + (et.getMonth() + 1) * 100 + et.getDate();
+}
+
+function isDST(date: Date): boolean {
+  // US Eastern: DST from 2nd Sunday of March to 1st Sunday of November
+  const year = date.getUTCFullYear();
+  const marchSecondSunday = new Date(Date.UTC(year, 2, 8));
+  marchSecondSunday.setUTCDate(8 + (7 - marchSecondSunday.getUTCDay()) % 7);
+  marchSecondSunday.setUTCHours(7); // 2AM ET = 7AM UTC
+  const novFirstSunday = new Date(Date.UTC(year, 10, 1));
+  novFirstSunday.setUTCDate(1 + (7 - novFirstSunday.getUTCDay()) % 7);
+  novFirstSunday.setUTCHours(6); // 2AM ET (EDT) = 6AM UTC
+  return date.getTime() >= marchSecondSunday.getTime() && date.getTime() < novFirstSunday.getTime();
 }
 
 function pick<T>(arr: T[], rand: () => number): T {

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { ReactionBar } from '@/components/reactions/ReactionBar';
 import { ReactionCounts } from '@/components/reactions/ReactionCounts';
 import { RankBadge } from '@/components/pitches/RankBadge';
@@ -37,15 +37,42 @@ interface PitchCardProps {
 export function PitchCard({ pitch, isOpen, onReactionChange, onEdit, onDelete }: PitchCardProps) {
   const [showActions, setShowActions] = useState(false);
   const actionsRef = useRef<HTMLDivElement>(null);
+  const menuItemsRef = useRef<HTMLButtonElement[]>([]);
 
   useEffect(() => {
     if (!showActions) return;
     const handleClick = (e: MouseEvent) => {
       if (actionsRef.current && !actionsRef.current.contains(e.target as Node)) setShowActions(false);
     };
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setShowActions(false);
+    };
     document.addEventListener('mousedown', handleClick);
-    return () => document.removeEventListener('mousedown', handleClick);
+    document.addEventListener('keydown', handleKeyDown);
+
+    // Focus first menu item when opened
+    requestAnimationFrame(() => {
+      menuItemsRef.current[0]?.focus();
+    });
+
+    return () => {
+      document.removeEventListener('mousedown', handleClick);
+      document.removeEventListener('keydown', handleKeyDown);
+    };
   }, [showActions]);
+
+  const handleMenuKeyDown = useCallback((e: React.KeyboardEvent) => {
+    const items = menuItemsRef.current.filter(Boolean);
+    if (items.length === 0) return;
+    const idx = items.indexOf(e.target as HTMLButtonElement);
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      items[(idx + 1) % items.length]?.focus();
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      items[(idx - 1 + items.length) % items.length]?.focus();
+    }
+  }, []);
 
   const canEdit = isOpen && pitch.is_own && pitch.edit_deadline && new Date(pitch.edit_deadline) > new Date();
   const canDelete = isOpen && pitch.is_own;
@@ -71,15 +98,18 @@ export function PitchCard({ pitch, isOpen, onReactionChange, onEdit, onDelete }:
               onClick={() => setShowActions(!showActions)}
               aria-label="Pitch actions"
               aria-expanded={showActions}
+              aria-haspopup="true"
               className="text-gray-400 hover:text-gray-600 min-w-[44px] min-h-[44px] flex items-center justify-center"
             >
               ...
             </button>
             {showActions && (
-              <div role="menu" className="absolute right-0 mt-1 w-32 bg-white border border-gray-200 rounded-lg shadow-lg z-10">
+              <div role="menu" className="absolute right-0 mt-1 w-32 bg-white border border-gray-200 rounded-lg shadow-lg z-10" onKeyDown={handleMenuKeyDown}>
                 {canEdit && (
                   <button
+                    ref={el => { if (el) menuItemsRef.current[0] = el; }}
                     role="menuitem"
+                    tabIndex={-1}
                     onClick={() => { onEdit?.(pitch.id, pitch.body); setShowActions(false); }}
                     className="block w-full text-left px-3 py-3 text-sm hover:bg-gray-50"
                   >
@@ -88,7 +118,9 @@ export function PitchCard({ pitch, isOpen, onReactionChange, onEdit, onDelete }:
                 )}
                 {canDelete && (
                   <button
+                    ref={el => { if (el) menuItemsRef.current[canEdit ? 1 : 0] = el; }}
                     role="menuitem"
+                    tabIndex={-1}
                     onClick={() => { onDelete?.(pitch.id); setShowActions(false); }}
                     className="block w-full text-left px-3 py-3 text-sm text-red-600 hover:bg-gray-50"
                   >

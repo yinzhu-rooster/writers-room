@@ -1,5 +1,6 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useUser } from '@/hooks/useUser';
@@ -51,9 +52,12 @@ const navItems = [
 export function BottomNav() {
   const pathname = usePathname();
   const { authUser } = useUser();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => { setMounted(true); }, []);
 
   const visibleItems = navItems.filter(
-    (item) => !item.authOnly || authUser
+    (item) => !item.authOnly || (mounted && authUser)
   );
 
   return (

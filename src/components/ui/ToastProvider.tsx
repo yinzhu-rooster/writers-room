@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useContext, useState, useCallback, useMemo, type ReactNode } from 'react';
+import { createContext, useContext, useState, useCallback, useMemo, useRef, type ReactNode } from 'react';
 import { Toast } from './Toast';
 
 interface ToastItem {
@@ -17,13 +17,12 @@ const ToastContext = createContext<ToastContextValue>({
   showToast: () => {},
 });
 
-let nextId = 0;
-
 export function ToastProvider({ children }: { children: ReactNode }) {
   const [toasts, setToasts] = useState<ToastItem[]>([]);
+  const nextIdRef = useRef(0);
 
   const showToast = useCallback((message: string, type: 'success' | 'error' = 'success') => {
-    const id = nextId++;
+    const id = nextIdRef.current++;
     setToasts((prev) => [...prev, { id, message, type }]);
   }, []);
 

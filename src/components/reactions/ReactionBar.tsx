@@ -30,7 +30,11 @@ export function ReactionBar({ pitchId, myReaction, onChange }: ReactionBarProps)
   const onChangeRef = useRef(onChange);
   onChangeRef.current = onChange;
 
+  const loadingRef = useRef(false);
+
   const handleReact = useCallback(async (type: ReactionType) => {
+    if (loadingRef.current) return;
+    loadingRef.current = true;
     setLoading(true);
 
     // Capture previous via ref to avoid stale closure
@@ -51,6 +55,7 @@ export function ReactionBar({ pitchId, myReaction, onChange }: ReactionBarProps)
     } catch {
       setCurrent(previous); // Revert on network error
     } finally {
+      loadingRef.current = false;
       setLoading(false);
       onChangeRef.current?.();
     }

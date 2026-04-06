@@ -28,7 +28,11 @@ export default function AdminFlagsPage() {
   useEffect(() => {
     fetch('/api/admin/flags')
       .then(async (r) => {
-        if (!r.ok) throw new Error((await r.json()).error);
+        if (!r.ok) {
+          let msg = 'Failed to load flags';
+          try { msg = (await r.json()).error ?? msg; } catch { /* non-JSON response */ }
+          throw new Error(msg);
+        }
         return r.json();
       })
       .then((data) => {

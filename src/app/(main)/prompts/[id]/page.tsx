@@ -18,9 +18,13 @@ export default function PromptDetailPage() {
   const [refreshKey, setRefreshKey] = useState(0);
 
   const loadPrompt = useCallback(async () => {
-    const res = await fetch(`/api/prompts/${id}`);
-    if (res.ok) {
-      setPrompt(await res.json());
+    try {
+      const res = await fetch(`/api/prompts/${id}`);
+      if (res.ok) {
+        setPrompt(await res.json());
+      }
+    } catch {
+      console.error('Failed to load prompt');
     }
     setLoading(false);
   }, [id]);

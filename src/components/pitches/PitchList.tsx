@@ -66,11 +66,13 @@ export function PitchList({ promptId, isOpen, refreshKey }: PitchListProps) {
     setPage(1);
     setHasMore(true);
     loadPage(1, false);
+    return () => { abortRef.current?.abort(); };
   }, [loadPage, refreshKey]);
 
   // Load more when page increments
   useEffect(() => {
     if (page > 1) loadPage(page, true);
+    return () => { abortRef.current?.abort(); };
   }, [page, loadPage]);
 
   const sentinelRef = useInfiniteScroll(
@@ -111,7 +113,7 @@ export function PitchList({ promptId, isOpen, refreshKey }: PitchListProps) {
             key={pitch.id}
             pitch={pitch}
             isOpen={isOpen}
-            onReactionChange={isOpen ? undefined : () => loadPage(1, false)}
+            onReactionChange={() => loadPage(1, false)}
             onEdit={(id, body) => setEditingPitch({ id, body })}
             onDelete={handleDelete}
           />

@@ -12,10 +12,16 @@ export interface RankedPitch {
 export function rankPitches(pitches: PitchForRanking[]): RankedPitch[] {
   if (pitches.length === 0) return [];
 
+  // Pre-compute timestamps to avoid repeated Date parsing in sort comparator
+  const timestamps = new Map<string, number>();
+  for (const p of pitches) {
+    timestamps.set(p.id, new Date(p.created_at).getTime());
+  }
+
   // Sort by laugh_count DESC, then created_at ASC (earlier = higher)
   const sorted = [...pitches].sort((a, b) => {
     if (b.laugh_count !== a.laugh_count) return b.laugh_count - a.laugh_count;
-    return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+    return timestamps.get(a.id)! - timestamps.get(b.id)!;
   });
 
   const result: RankedPitch[] = [];

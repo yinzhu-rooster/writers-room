@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, useMemo } from 'react';
 
 function formatTimeLeft(ms: number): string {
   if (ms <= 0) return 'Closed';
@@ -14,7 +14,8 @@ function formatTimeLeft(ms: number): string {
 }
 
 export function CountdownTimer({ closesAt, onExpired }: { closesAt: string; onExpired?: () => void }) {
-  const [timeLeft, setTimeLeft] = useState(() => new Date(closesAt).getTime() - Date.now());
+  const closesAtMs = useMemo(() => new Date(closesAt).getTime(), [closesAt]);
+  const [timeLeft, setTimeLeft] = useState(() => closesAtMs - Date.now());
   const onExpiredRef = useRef(onExpired);
 
   useEffect(() => {
@@ -23,7 +24,7 @@ export function CountdownTimer({ closesAt, onExpired }: { closesAt: string; onEx
 
   useEffect(() => {
     const interval = setInterval(() => {
-      const remaining = new Date(closesAt).getTime() - Date.now();
+      const remaining = closesAtMs - Date.now();
       setTimeLeft(remaining);
       if (remaining <= 0) {
         clearInterval(interval);
@@ -31,7 +32,7 @@ export function CountdownTimer({ closesAt, onExpired }: { closesAt: string; onEx
       }
     }, 1000);
     return () => clearInterval(interval);
-  }, [closesAt]);
+  }, [closesAtMs]);
 
   const isClosed = timeLeft <= 0;
 

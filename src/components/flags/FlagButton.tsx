@@ -8,11 +8,12 @@ import type { FlagReason } from '@/types/enums';
 interface FlagButtonProps {
   type: 'pitch' | 'prompt';
   targetId: string;
+  initialFlagged?: boolean;
 }
 
-export function FlagButton({ type, targetId }: FlagButtonProps) {
+export function FlagButton({ type, targetId, initialFlagged = false }: FlagButtonProps) {
   const [showPicker, setShowPicker] = useState(false);
-  const [flagged, setFlagged] = useState(false);
+  const [flagged, setFlagged] = useState(initialFlagged);
   const { showToast } = useToast();
 
   const handleFlag = async (reason: FlagReason) => {

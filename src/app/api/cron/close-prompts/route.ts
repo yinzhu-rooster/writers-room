@@ -62,9 +62,13 @@ export async function POST(request: NextRequest) {
           supabase.from('pitches').update({ rank: u.rank, is_revealed: u.is_revealed }).eq('id', u.id)
         )
       );
-      for (const { error: updateError } of results) {
+      const hasUpdateError = results.some(({ error: updateError }) => {
         if (updateError) console.error('Failed to update pitch:', updateError.message);
-      }
+        return !!updateError;
+      });
+
+      // Only mark as processed if all pitch updates succeeded
+      if (hasUpdateError) continue;
     }
 
     // Mark prompt as processed
@@ -72,7 +76,10 @@ export async function POST(request: NextRequest) {
       .from('prompts')
       .update({ is_closed_processed: true })
       .eq('id', prompt.id);
-    if (markError) console.error(`Failed to mark prompt ${prompt.id} as processed:`, markError.message);
+    if (markError) {
+      console.error(`Failed to mark prompt ${prompt.id} as processed:`, markError.message);
+      continue;
+    }
 
     processed++;
   }

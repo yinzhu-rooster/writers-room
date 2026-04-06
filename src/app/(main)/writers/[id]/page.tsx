@@ -63,7 +63,7 @@ export default function WriterProfilePage() {
       {/* Profile header */}
       <div className="flex items-center gap-4 mb-6">
         {user.avatar_url ? (
-          <img src={user.avatar_url} alt={user.username} className="h-16 w-16 rounded-full" />
+          <img src={user.avatar_url} alt={user.username} className="h-16 w-16 rounded-full" referrerPolicy="no-referrer" />
         ) : (
           <div className="h-16 w-16 rounded-full bg-indigo-500 flex items-center justify-center text-white text-2xl font-bold shrink-0">
             {user.username?.[0]?.toUpperCase() ?? 'U'}

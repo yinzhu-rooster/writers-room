@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
+import { createContext, useContext, useEffect, useState, useRef, type ReactNode } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import type { User } from '@/types/database';
 import type { User as AuthUser } from '@supabase/supabase-js';
@@ -21,6 +21,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
   const [authUser, setAuthUser] = useState<AuthUser | null>(null);
   const [profile, setProfile] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const initialLoadDone = useRef(false);
 
   useEffect(() => {
     let supabase: ReturnType<typeof createClient>;
@@ -58,10 +59,16 @@ export function UserProvider({ children }: { children: ReactNode }) {
       }
     }
 
-    loadUser().finally(() => setLoading(false));
+    loadUser().finally(() => {
+      initialLoadDone.current = true;
+      setLoading(false);
+    });
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (_event, session) => {
+        // Skip auth change events until initial load is done to avoid races
+        if (!initialLoadDone.current) return;
+
         setAuthUser(session?.user ?? null);
         if (session?.user) {
           const { data, error: profileError } = await supabase
