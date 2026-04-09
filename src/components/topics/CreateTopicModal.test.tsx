@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { CreatePromptModal } from './CreatePromptModal';
+import { CreateTopicModal } from './CreateTopicModal';
 
 vi.mock('@/hooks/useFocusTrap', () => ({
   useFocusTrap: vi.fn(() => ({ current: null })),
@@ -19,39 +19,39 @@ beforeEach(() => {
   mockFetch.mockResolvedValue({ ok: true, json: async () => ({ id: 'new-prompt' }) });
 });
 
-describe('CreatePromptModal', () => {
+describe('CreateTopicModal', () => {
   it('returns null when not open', () => {
     const { container } = render(
-      <CreatePromptModal open={false} onClose={vi.fn()} onCreated={vi.fn()} />
+      <CreateTopicModal open={false} onClose={vi.fn()} onCreated={vi.fn()} />
     );
     expect(container.firstChild).toBeNull();
   });
 
   it('renders form when open', () => {
-    render(<CreatePromptModal open={true} onClose={vi.fn()} onCreated={vi.fn()} />);
+    render(<CreateTopicModal open={true} onClose={vi.fn()} onCreated={vi.fn()} />);
     expect(screen.getByRole('dialog')).toBeInTheDocument();
-    expect(screen.getByPlaceholderText('Write your comedy prompt...')).toBeInTheDocument();
+    expect(screen.getByPlaceholderText('Write your comedy topic...')).toBeInTheDocument();
   });
 
   it('submit button is disabled when body is empty', () => {
-    render(<CreatePromptModal open={true} onClose={vi.fn()} onCreated={vi.fn()} />);
+    render(<CreateTopicModal open={true} onClose={vi.fn()} onCreated={vi.fn()} />);
     expect(screen.getByRole('button', { name: 'Create' })).toBeDisabled();
   });
 
   it('submit button is enabled after typing', async () => {
     const user = userEvent.setup();
-    render(<CreatePromptModal open={true} onClose={vi.fn()} onCreated={vi.fn()} />);
-    await user.type(screen.getByPlaceholderText('Write your comedy prompt...'), 'My prompt');
+    render(<CreateTopicModal open={true} onClose={vi.fn()} onCreated={vi.fn()} />);
+    await user.type(screen.getByPlaceholderText('Write your comedy topic...'), 'My prompt');
     expect(screen.getByRole('button', { name: 'Create' })).not.toBeDisabled();
   });
 
   it('calls fetch POST on submit', async () => {
     const user = userEvent.setup();
-    render(<CreatePromptModal open={true} onClose={vi.fn()} onCreated={vi.fn()} />);
-    await user.type(screen.getByPlaceholderText('Write your comedy prompt...'), 'My prompt');
+    render(<CreateTopicModal open={true} onClose={vi.fn()} onCreated={vi.fn()} />);
+    await user.type(screen.getByPlaceholderText('Write your comedy topic...'), 'My prompt');
     await user.click(screen.getByRole('button', { name: 'Create' }));
     expect(mockFetch).toHaveBeenCalledWith(
-      '/api/prompts',
+      '/api/topics',
       expect.objectContaining({
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -66,8 +66,8 @@ describe('CreatePromptModal', () => {
       json: async () => ({ error: 'Creation failed' }),
     });
     const user = userEvent.setup();
-    render(<CreatePromptModal open={true} onClose={vi.fn()} onCreated={vi.fn()} />);
-    await user.type(screen.getByPlaceholderText('Write your comedy prompt...'), 'My prompt');
+    render(<CreateTopicModal open={true} onClose={vi.fn()} onCreated={vi.fn()} />);
+    await user.type(screen.getByPlaceholderText('Write your comedy topic...'), 'My prompt');
     await user.click(screen.getByRole('button', { name: 'Create' }));
     expect(screen.getByText('Creation failed')).toBeInTheDocument();
   });
@@ -76,8 +76,8 @@ describe('CreatePromptModal', () => {
     const onCreated = vi.fn();
     const onClose = vi.fn();
     const user = userEvent.setup();
-    render(<CreatePromptModal open={true} onClose={onClose} onCreated={onCreated} />);
-    await user.type(screen.getByPlaceholderText('Write your comedy prompt...'), 'My prompt');
+    render(<CreateTopicModal open={true} onClose={onClose} onCreated={onCreated} />);
+    await user.type(screen.getByPlaceholderText('Write your comedy topic...'), 'My prompt');
     await user.click(screen.getByRole('button', { name: 'Create' }));
     expect(onCreated).toHaveBeenCalledTimes(1);
     expect(onClose).toHaveBeenCalledTimes(1);
@@ -86,7 +86,7 @@ describe('CreatePromptModal', () => {
   it('closes on Escape key', async () => {
     const onClose = vi.fn();
     const user = userEvent.setup();
-    render(<CreatePromptModal open={true} onClose={onClose} onCreated={vi.fn()} />);
+    render(<CreateTopicModal open={true} onClose={onClose} onCreated={vi.fn()} />);
     await user.keyboard('{Escape}');
     expect(onClose).toHaveBeenCalledTimes(1);
   });
@@ -94,7 +94,7 @@ describe('CreatePromptModal', () => {
   it('calls onClose when Cancel is clicked', async () => {
     const onClose = vi.fn();
     const user = userEvent.setup();
-    render(<CreatePromptModal open={true} onClose={onClose} onCreated={vi.fn()} />);
+    render(<CreateTopicModal open={true} onClose={onClose} onCreated={vi.fn()} />);
     await user.click(screen.getByRole('button', { name: 'Cancel' }));
     expect(onClose).toHaveBeenCalledTimes(1);
   });

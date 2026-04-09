@@ -1,4 +1,4 @@
-import type { PromptType } from '@/types/enums';
+import type { TopicType } from '@/types/enums';
 import { type AIComedian, COMEDIAN_PITCHES } from './comedians';
 
 interface PitchOutput {
@@ -36,7 +36,7 @@ function hashString(str: string): number {
  */
 export function generateComedianPitches(
   comedian: AIComedian,
-  prompts: { id: string; body: string; prompt_type: PromptType }[],
+  prompts: { id: string; body: string; prompt_type: TopicType }[],
   daySeed: number,
 ): PitchOutput[] {
   const pitchPool = COMEDIAN_PITCHES[comedian.id];

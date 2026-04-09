@@ -57,7 +57,7 @@ describe('FlagButton', () => {
     await user.click(screen.getByRole('button', { name: 'Flag' }));
     await user.click(screen.getByRole('menuitem', { name: 'Duplicate' }));
     expect(mockFetch).toHaveBeenCalledWith(
-      '/api/prompts/prompt-1/flags',
+      '/api/topics/prompt-1/flags',
       expect.objectContaining({
         method: 'POST',
         body: JSON.stringify({ reason: 'duplicate' }),

@@ -10,13 +10,13 @@ vi.mock('@/lib/cron-auth', () => ({
   verifyCronSecret: vi.fn(),
 }));
 
-vi.mock('@/lib/ai/prompt-generator', () => ({
-  generatePrompts: vi.fn(),
+vi.mock('@/lib/ai/topic-generator', () => ({
+  generateTopics: vi.fn(),
 }));
 
 import { createAdminClient } from '@/lib/supabase/admin';
 import { verifyCronSecret } from '@/lib/cron-auth';
-import { generatePrompts } from '@/lib/ai/prompt-generator';
+import { generateTopics } from '@/lib/ai/topic-generator';
 
 function mockChain(data: unknown = null, error: unknown = null, count: number | null = null) {
   const chain: any = {};
@@ -73,7 +73,7 @@ describe('POST /api/cron/generate-prompts', () => {
       { body: 'Prompt 4', prompt_type: 'topical' },
       { body: 'Prompt 5', prompt_type: 'evergreen' },
     ];
-    vi.mocked(generatePrompts).mockResolvedValue(generatedPrompts as any);
+    vi.mocked(generateTopics).mockResolvedValue(generatedPrompts as any);
 
     let callCount = 0;
     const supabase = {

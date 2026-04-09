@@ -1,8 +1,8 @@
-import type { PromptType } from '@/types/enums';
+import type { TopicType } from '@/types/enums';
 
 interface GeneratedPrompt {
   body: string;
-  prompt_type: PromptType;
+  prompt_type: TopicType;
 }
 
 // ---------------------------------------------------------------------------
@@ -130,7 +130,7 @@ const EVERGREENS: string[] = [
   'The worst way to find out you\'re famous',
 ];
 
-const POOLS: Record<PromptType, string[]> = {
+const POOLS: Record<TopicType, string[]> = {
   headline: HEADLINES,
   setup: SETUPS,
   format: FORMATS,
@@ -185,9 +185,9 @@ function pick<T>(arr: T[], rand: () => number): T {
  * Currently picks from curated pools using a day-seeded RNG.
  * When ready, swap this implementation for the Anthropic API call.
  */
-export async function generatePrompts(): Promise<GeneratedPrompt[]> {
+export async function generateTopics(): Promise<GeneratedPrompt[]> {
   const rand = seededRandom(daySeed());
-  const types: PromptType[] = ['headline', 'setup', 'format', 'topical', 'evergreen'];
+  const types: TopicType[] = ['headline', 'setup', 'format', 'topical', 'evergreen'];
 
   return types.map((type) => ({
     body: pick(POOLS[type], rand),

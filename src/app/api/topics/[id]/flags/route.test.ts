@@ -21,14 +21,14 @@ function mockChain(data: unknown = null, error: unknown = null, count: number | 
 }
 
 function makeRequest(body: unknown, id = 'prompt-1') {
-  return new NextRequest(`http://localhost/api/prompts/${id}/flags`, {
+  return new NextRequest(`http://localhost/api/topics/${id}/flags`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body),
   });
 }
 
-describe('POST /api/prompts/[id]/flags', () => {
+describe('POST /api/topics/[id]/flags', () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });

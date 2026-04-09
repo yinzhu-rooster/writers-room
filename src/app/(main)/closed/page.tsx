@@ -1,11 +1,11 @@
 'use client';
 
 import { useEffect, useState, useCallback, useRef } from 'react';
-import { PromptCard } from '@/components/prompts/PromptCard';
+import { TopicCard } from '@/components/topics/TopicCard';
 import { LoadingSkeleton } from '@/components/ui/LoadingSkeleton';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { useInfiniteScroll } from '@/hooks/useInfiniteScroll';
-import type { Prompt } from '@/types/database';
+import type { Topic } from '@/types/database';
 
 const SORT_OPTIONS = [
   { value: 'newest', label: 'Newest' },
@@ -17,7 +17,7 @@ const SORT_OPTIONS = [
 type SortValue = typeof SORT_OPTIONS[number]['value'];
 
 export default function ClosedTopicsPage() {
-  const [prompts, setPrompts] = useState<Prompt[]>([]);
+  const [topics, setTopics] = useState<Topic[]>([]);
   const [page, setPage] = useState(1);
   const [sort, setSort] = useState<SortValue>('newest');
   const [hasMore, setHasMore] = useState(true);
@@ -31,16 +31,16 @@ export default function ClosedTopicsPage() {
     if (append) setLoadingMore(true); else setLoading(true);
     setError('');
     try {
-      const res = await fetch(`/api/prompts?status=closed&sort=${sortBy}&page=${pageNum}`);
+      const res = await fetch(`/api/topics?status=closed&sort=${sortBy}&page=${pageNum}`);
       if (!res.ok) throw new Error('Failed to load');
       if (sortRef.current !== sortBy) return;
       const data = await res.json();
-      const newPrompts = data.prompts ?? [];
+      const newTopics = data.topics ?? [];
       const total = data.total ?? 0;
       if (append) {
-        setPrompts(prev => [...prev, ...newPrompts]);
+        setTopics(prev => [...prev, ...newTopics]);
       } else {
-        setPrompts(newPrompts);
+        setTopics(newTopics);
       }
       setHasMore(pageNum * (data.page_size ?? 100) < total);
     } catch (e) {
@@ -87,17 +87,17 @@ export default function ClosedTopicsPage() {
         <p className="text-center text-red-600 py-12">{error}</p>
       ) : loading ? (
         <LoadingSkeleton count={3} height="h-24" />
-      ) : prompts.length === 0 ? (
+      ) : topics.length === 0 ? (
         <EmptyState message="No closed topics yet" />
       ) : (
         <div className="space-y-3">
-          {prompts.map((p) => (
-            <PromptCard key={p.id} prompt={p} isOpen={false} />
+          {topics.map((p) => (
+            <TopicCard key={p.id} topic={p} isOpen={false} />
           ))}
         </div>
       )}
 
-      {hasMore && prompts.length > 0 && (
+      {hasMore && topics.length > 0 && (
         <div ref={sentinelRef} className="py-4">
           {loadingMore && <LoadingSkeleton count={2} height="h-24" />}
         </div>

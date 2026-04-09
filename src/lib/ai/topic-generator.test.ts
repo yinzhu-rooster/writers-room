@@ -1,14 +1,14 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { generatePrompts } from './prompt-generator';
+import { generateTopics } from './topic-generator';
 
-describe('generatePrompts', () => {
+describe('generateTopics', () => {
   it('returns exactly 5 prompts', async () => {
-    const prompts = await generatePrompts();
+    const prompts = await generateTopics();
     expect(prompts).toHaveLength(5);
   });
 
   it('returns one prompt per type', async () => {
-    const prompts = await generatePrompts();
+    const prompts = await generateTopics();
     const types = prompts.map((p) => p.prompt_type);
     expect(types).toContain('headline');
     expect(types).toContain('setup');
@@ -19,7 +19,7 @@ describe('generatePrompts', () => {
   });
 
   it('all prompts have non-empty body strings', async () => {
-    const prompts = await generatePrompts();
+    const prompts = await generateTopics();
     for (const p of prompts) {
       expect(typeof p.body).toBe('string');
       expect(p.body.length).toBeGreaterThan(10);
@@ -27,13 +27,13 @@ describe('generatePrompts', () => {
   });
 
   it('returns same prompts for the same day (deterministic)', async () => {
-    const first = await generatePrompts();
-    const second = await generatePrompts();
+    const first = await generateTopics();
+    const second = await generateTopics();
     expect(first).toEqual(second);
   });
 
   it('returns different prompts on different days', async () => {
-    const today = await generatePrompts();
+    const today = await generateTopics();
 
     // Mock Date to tomorrow
     const tomorrow = new Date();
@@ -41,7 +41,7 @@ describe('generatePrompts', () => {
     vi.useFakeTimers();
     vi.setSystemTime(tomorrow);
 
-    const tomorrowPrompts = await generatePrompts();
+    const tomorrowPrompts = await generateTopics();
 
     vi.useRealTimers();
 
@@ -54,7 +54,7 @@ describe('generatePrompts', () => {
 
   it('prompt_type is always a valid enum value', async () => {
     const valid = ['headline', 'setup', 'format', 'topical', 'evergreen'];
-    const prompts = await generatePrompts();
+    const prompts = await generateTopics();
     for (const p of prompts) {
       expect(valid).toContain(p.prompt_type);
     }

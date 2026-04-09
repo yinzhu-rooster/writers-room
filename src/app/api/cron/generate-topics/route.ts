@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/admin';
-import { generatePrompts } from '@/lib/ai/prompt-generator';
+import { generateTopics } from '@/lib/ai/topic-generator';
 import { verifyCronSecret } from '@/lib/cron-auth';
 
 export async function POST(request: NextRequest) {
@@ -38,7 +38,7 @@ export async function POST(request: NextRequest) {
   }
 
   // Generate prompts
-  const generated = await generatePrompts();
+  const generated = await generateTopics();
 
   // Insert all 5 prompts
   const { error } = await supabase.from('prompts').insert(

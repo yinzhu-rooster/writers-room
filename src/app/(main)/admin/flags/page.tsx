@@ -11,7 +11,7 @@ interface PitchFlagEntry {
   users: { username: string };
 }
 
-interface PromptFlagEntry {
+interface TopicFlagEntry {
   id: string;
   reason: string;
   created_at: string;
@@ -21,7 +21,7 @@ interface PromptFlagEntry {
 
 export default function AdminFlagsPage() {
   const [pitchFlags, setPitchFlags] = useState<PitchFlagEntry[]>([]);
-  const [promptFlags, setPromptFlags] = useState<PromptFlagEntry[]>([]);
+  const [topicFlags, setTopicFlags] = useState<TopicFlagEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
@@ -37,7 +37,7 @@ export default function AdminFlagsPage() {
       })
       .then((data) => {
         setPitchFlags(data.pitch_flags);
-        setPromptFlags(data.prompt_flags);
+        setTopicFlags(data.prompt_flags);
         setLoading(false);
       })
       .catch((e) => { setError(e.message); setLoading(false); });
@@ -65,9 +65,9 @@ export default function AdminFlagsPage() {
         {pitchFlags.length === 0 && <p className="text-sm text-gray-500">No pitch flags</p>}
       </div>
 
-      <h2 className="text-sm font-medium text-gray-700 mb-3">Topic Flags ({promptFlags.length})</h2>
+      <h2 className="text-sm font-medium text-gray-700 mb-3">Topic Flags ({topicFlags.length})</h2>
       <div className="space-y-2">
-        {promptFlags.map((f) => (
+        {topicFlags.map((f) => (
           <div key={f.id} className="rounded-lg border border-gray-200 p-3 text-sm">
             <div className="flex justify-between">
               <span className="text-red-600 font-medium">{f.reason}</span>
@@ -77,7 +77,7 @@ export default function AdminFlagsPage() {
             <p className="text-gray-400 text-xs mt-1">Flagged by {f.users?.username ?? 'unknown'}</p>
           </div>
         ))}
-        {promptFlags.length === 0 && <p className="text-sm text-gray-500">No topic flags</p>}
+        {topicFlags.length === 0 && <p className="text-sm text-gray-500">No topic flags</p>}
       </div>
     </div>
   );

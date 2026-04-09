@@ -1,4 +1,4 @@
-import { PromptType, ReactionType, FlagReason } from './enums';
+import { TopicType, ReactionType, FlagReason } from './enums';
 
 export interface User {
   id: string;
@@ -13,10 +13,10 @@ export interface User {
   created_at: string;
 }
 
-export interface Prompt {
+export interface Topic {
   id: string;
   body: string;
-  prompt_type: PromptType;
+  prompt_type: TopicType;
   created_by: string | null;
   is_system_generated: boolean;
   opens_at: string;
@@ -25,6 +25,9 @@ export interface Prompt {
   submission_count: number;
   created_at: string;
 }
+
+/** @deprecated Use Topic instead */
+export type Prompt = Topic;
 
 export interface Pitch {
   id: string;
@@ -67,13 +70,16 @@ export interface PitchFlag {
   created_at: string;
 }
 
-export interface PromptFlag {
+export interface TopicFlag {
   id: string;
   prompt_id: string;
   user_id: string;
   reason: FlagReason;
   created_at: string;
 }
+
+/** @deprecated Use TopicFlag instead */
+export type PromptFlag = TopicFlag;
 
 export interface AppConfig {
   key: string;

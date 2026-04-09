@@ -29,18 +29,18 @@ function mockChain(data: unknown = null, error: unknown = null, count: number | 
 }
 
 function makeGetRequest(id = 'prompt-1') {
-  return new NextRequest(`http://localhost/api/prompts/${id}/pitches`);
+  return new NextRequest(`http://localhost/api/topics/${id}/pitches`);
 }
 
 function makePostRequest(body: unknown, id = 'prompt-1') {
-  return new NextRequest(`http://localhost/api/prompts/${id}/pitches`, {
+  return new NextRequest(`http://localhost/api/topics/${id}/pitches`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body),
   });
 }
 
-describe('GET /api/prompts/[id]/pitches', () => {
+describe('GET /api/topics/[id]/pitches', () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
@@ -81,7 +81,7 @@ describe('GET /api/prompts/[id]/pitches', () => {
   });
 });
 
-describe('POST /api/prompts/[id]/pitches', () => {
+describe('POST /api/topics/[id]/pitches', () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });

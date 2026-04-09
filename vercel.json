@@ -1,11 +1,11 @@
 {
   "crons": [
     {
-      "path": "/api/cron/generate-prompts",
+      "path": "/api/cron/generate-topics",
       "schedule": "0 14 * * *"
     },
     {
-      "path": "/api/cron/close-prompts",
+      "path": "/api/cron/close-topics",
       "schedule": "*/5 * * * *"
     },
     {

@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-export const createPromptSchema = z.object({
+export const createTopicSchema = z.object({
   body: z.string()
     .trim()
     .min(1, 'Topic text is required')
@@ -9,4 +9,4 @@ export const createPromptSchema = z.object({
   duration_hours: z.number().int('Duration must be a whole number').min(1).max(72).default(24),
 });
 
-export type CreatePromptInput = z.infer<typeof createPromptSchema>;
+export type CreateTopicInput = z.infer<typeof createTopicSchema>;

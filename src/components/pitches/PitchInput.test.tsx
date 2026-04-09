@@ -17,30 +17,30 @@ beforeEach(() => {
 
 describe('PitchInput', () => {
   it('renders textarea and submit button', () => {
-    render(<PitchInput promptId="prompt-1" onSubmitted={vi.fn()} />);
+    render(<PitchInput topicId="prompt-1" onSubmitted={vi.fn()} />);
     expect(screen.getByPlaceholderText('Write your pitch...')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Submit' })).toBeInTheDocument();
   });
 
   it('submit button is disabled when input is empty', () => {
-    render(<PitchInput promptId="prompt-1" onSubmitted={vi.fn()} />);
+    render(<PitchInput topicId="prompt-1" onSubmitted={vi.fn()} />);
     expect(screen.getByRole('button', { name: 'Submit' })).toBeDisabled();
   });
 
   it('submit button is enabled after typing', async () => {
     const user = userEvent.setup();
-    render(<PitchInput promptId="prompt-1" onSubmitted={vi.fn()} />);
+    render(<PitchInput topicId="prompt-1" onSubmitted={vi.fn()} />);
     await user.type(screen.getByPlaceholderText('Write your pitch...'), 'My pitch');
     expect(screen.getByRole('button', { name: 'Submit' })).not.toBeDisabled();
   });
 
   it('calls fetch on submit with correct body', async () => {
     const user = userEvent.setup();
-    render(<PitchInput promptId="prompt-1" onSubmitted={vi.fn()} />);
+    render(<PitchInput topicId="prompt-1" onSubmitted={vi.fn()} />);
     await user.type(screen.getByPlaceholderText('Write your pitch...'), 'My pitch');
     await user.click(screen.getByRole('button', { name: 'Submit' }));
     expect(mockFetch).toHaveBeenCalledWith(
-      '/api/prompts/prompt-1/pitches',
+      '/api/topics/prompt-1/pitches',
       expect.objectContaining({
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -55,7 +55,7 @@ describe('PitchInput', () => {
       json: async () => ({ error: 'Something went wrong' }),
     });
     const user = userEvent.setup();
-    render(<PitchInput promptId="prompt-1" onSubmitted={vi.fn()} />);
+    render(<PitchInput topicId="prompt-1" onSubmitted={vi.fn()} />);
     await user.type(screen.getByPlaceholderText('Write your pitch...'), 'My pitch');
     await user.click(screen.getByRole('button', { name: 'Submit' }));
     expect(screen.getByText('Something went wrong')).toBeInTheDocument();
@@ -63,7 +63,7 @@ describe('PitchInput', () => {
 
   it('clears input on success', async () => {
     const user = userEvent.setup();
-    render(<PitchInput promptId="prompt-1" onSubmitted={vi.fn()} />);
+    render(<PitchInput topicId="prompt-1" onSubmitted={vi.fn()} />);
     const textarea = screen.getByPlaceholderText('Write your pitch...');
     await user.type(textarea, 'My pitch');
     await user.click(screen.getByRole('button', { name: 'Submit' }));
@@ -73,7 +73,7 @@ describe('PitchInput', () => {
   it('calls onSubmitted on success', async () => {
     const onSubmitted = vi.fn();
     const user = userEvent.setup();
-    render(<PitchInput promptId="prompt-1" onSubmitted={onSubmitted} />);
+    render(<PitchInput topicId="prompt-1" onSubmitted={onSubmitted} />);
     await user.type(screen.getByPlaceholderText('Write your pitch...'), 'My pitch');
     await user.click(screen.getByRole('button', { name: 'Submit' }));
     expect(onSubmitted).toHaveBeenCalledTimes(1);
@@ -86,7 +86,7 @@ describe('PitchInput', () => {
     });
     const onSubmitted = vi.fn();
     const user = userEvent.setup();
-    render(<PitchInput promptId="prompt-1" onSubmitted={onSubmitted} />);
+    render(<PitchInput topicId="prompt-1" onSubmitted={onSubmitted} />);
     await user.type(screen.getByPlaceholderText('Write your pitch...'), 'My pitch');
     await user.click(screen.getByRole('button', { name: 'Submit' }));
     expect(onSubmitted).not.toHaveBeenCalled();

@@ -15,7 +15,7 @@ export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const { id: promptId } = await params;
+  const { id: topicId } = await params;
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   const { searchParams } = new URL(request.url);
@@ -26,7 +26,7 @@ export async function GET(
   const { data: prompt } = await supabase
     .from('prompts')
     .select('closes_at')
-    .eq('id', promptId)
+    .eq('id', topicId)
     .single();
 
   if (!prompt) return notFound('Topic not found');
@@ -36,7 +36,7 @@ export async function GET(
   let query = supabase
     .from('pitches')
     .select('*, users!inner(username, is_ai), reactions!left(reaction_type, user_id)', { count: 'exact' })
-    .eq('prompt_id', promptId)
+    .eq('prompt_id', topicId)
     .is('deleted_at', null);
 
   if (isOpen) {
@@ -76,7 +76,7 @@ export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const { id: promptId } = await params;
+  const { id: topicId } = await params;
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return unauthorized();
@@ -93,7 +93,7 @@ export async function POST(
   const { data: prompt } = await supabase
     .from('prompts')
     .select('closes_at')
-    .eq('id', promptId)
+    .eq('id', topicId)
     .single();
 
   if (!prompt) return notFound('Topic not found');
@@ -106,7 +106,7 @@ export async function POST(
   const { count } = await supabase
     .from('pitches')
     .select('*', { count: 'exact', head: true })
-    .eq('prompt_id', promptId)
+    .eq('prompt_id', topicId)
     .eq('user_id', user.id)
     .is('deleted_at', null);
 
@@ -120,7 +120,7 @@ export async function POST(
   const { data: pitch, error } = await supabase
     .from('pitches')
     .insert({
-      prompt_id: promptId,
+      prompt_id: topicId,
       user_id: user.id,
       body: parsed.data.body,
     })

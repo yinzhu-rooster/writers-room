@@ -9,12 +9,12 @@ import { useToast } from '@/components/ui/ToastProvider';
 import { useInfiniteScroll } from '@/hooks/useInfiniteScroll';
 
 interface PitchListProps {
-  promptId: string;
+  topicId: string;
   isOpen: boolean;
   refreshKey: number;
 }
 
-export function PitchList({ promptId, isOpen, refreshKey }: PitchListProps) {
+export function PitchList({ topicId, isOpen, refreshKey }: PitchListProps) {
   const [pitches, setPitches] = useState<PitchData[]>([]);
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
@@ -36,7 +36,7 @@ export function PitchList({ promptId, isOpen, refreshKey }: PitchListProps) {
 
     if (append) setLoadingMore(true); else setLoading(true);
     try {
-      const res = await fetch(`/api/prompts/${promptId}/pitches?page=${pageNum}`, {
+      const res = await fetch(`/api/topics/${topicId}/pitches?page=${pageNum}`, {
         signal: controller.signal,
       });
       if (!res.ok) throw new Error('Failed to load');
@@ -59,7 +59,7 @@ export function PitchList({ promptId, isOpen, refreshKey }: PitchListProps) {
       setLoading(false);
       setLoadingMore(false);
     }
-  }, [promptId]);
+  }, [topicId]);
 
   // Reset on refreshKey change
   useEffect(() => {

@@ -1,15 +1,15 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
-import { PromptCard } from '@/components/prompts/PromptCard';
-import { CreatePromptModal } from '@/components/prompts/CreatePromptModal';
+import { TopicCard } from '@/components/topics/TopicCard';
+import { CreateTopicModal } from '@/components/topics/CreateTopicModal';
 import { LoadingSkeleton } from '@/components/ui/LoadingSkeleton';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { useInfiniteScroll } from '@/hooks/useInfiniteScroll';
-import type { Prompt } from '@/types/database';
+import type { Topic } from '@/types/database';
 
 export default function OpenTopicsPage() {
-  const [prompts, setPrompts] = useState<Prompt[]>([]);
+  const [topics, setTopics] = useState<Topic[]>([]);
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
   const [loading, setLoading] = useState(true);
@@ -21,15 +21,15 @@ export default function OpenTopicsPage() {
     if (append) setLoadingMore(true); else setLoading(true);
     setError('');
     try {
-      const res = await fetch(`/api/prompts?status=open&page=${pageNum}`);
+      const res = await fetch(`/api/topics?status=open&page=${pageNum}`);
       if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error ?? 'Failed to load');
       const data = await res.json();
-      const newPrompts = data.prompts ?? [];
+      const newTopics = data.topics ?? [];
       const total = data.total ?? 0;
       if (append) {
-        setPrompts(prev => [...prev, ...newPrompts]);
+        setTopics(prev => [...prev, ...newTopics]);
       } else {
-        setPrompts(newPrompts);
+        setTopics(newTopics);
       }
       setHasMore(pageNum * (data.page_size ?? 100) < total);
     } catch (e) {
@@ -71,23 +71,23 @@ export default function OpenTopicsPage() {
         <p className="text-center text-red-600 py-12">{error}</p>
       ) : loading ? (
         <LoadingSkeleton count={3} height="h-24" />
-      ) : prompts.length === 0 ? (
+      ) : topics.length === 0 ? (
         <EmptyState message="No open topics right now" action={{ label: 'Create one', onClick: () => setShowCreate(true) }} />
       ) : (
         <div className="space-y-3">
-          {prompts.map((p) => (
-            <PromptCard key={p.id} prompt={p} isOpen={true} />
+          {topics.map((p) => (
+            <TopicCard key={p.id} topic={p} isOpen={true} />
           ))}
         </div>
       )}
 
-      {hasMore && prompts.length > 0 && (
+      {hasMore && topics.length > 0 && (
         <div ref={sentinelRef} className="py-4">
           {loadingMore && <LoadingSkeleton count={2} height="h-24" />}
         </div>
       )}
 
-      <CreatePromptModal
+      <CreateTopicModal
         open={showCreate}
         onClose={() => setShowCreate(false)}
         onCreated={handleCreated}

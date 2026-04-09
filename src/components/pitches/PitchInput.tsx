@@ -4,11 +4,11 @@ import { useState } from 'react';
 import { useToast } from '@/components/ui/ToastProvider';
 
 interface PitchInputProps {
-  promptId: string;
+  topicId: string;
   onSubmitted: () => void;
 }
 
-export function PitchInput({ promptId, onSubmitted }: PitchInputProps) {
+export function PitchInput({ topicId, onSubmitted }: PitchInputProps) {
   const [body, setBody] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -22,7 +22,7 @@ export function PitchInput({ promptId, onSubmitted }: PitchInputProps) {
     setLoading(true);
 
     try {
-      const res = await fetch(`/api/prompts/${promptId}/pitches`, {
+      const res = await fetch(`/api/topics/${topicId}/pitches`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ body: body.trim() }),

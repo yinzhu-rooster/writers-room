@@ -3,7 +3,7 @@ import { createAdminClient } from '@/lib/supabase/admin';
 import { verifyCronSecret } from '@/lib/cron-auth';
 import { AI_COMEDIANS } from '@/lib/ai/comedians';
 import { generateComedianPitches, getComedianPitchHour } from '@/lib/ai/pitch-comedian';
-import type { PromptType } from '@/types/enums';
+import type { TopicType } from '@/types/enums';
 
 export async function POST(request: NextRequest) {
   if (!verifyCronSecret(request.headers.get('authorization'))) {
@@ -25,14 +25,14 @@ export async function POST(request: NextRequest) {
   const daySeed = year * 10000 + month * 100 + day;
 
   // Fetch open prompts
-  const { data: openPrompts, error: promptError } = await supabase
+  const { data: openTopics, error: topicError } = await supabase
     .from('prompts')
     .select('id, body, prompt_type')
     .lte('opens_at', now.toISOString())
     .gt('closes_at', now.toISOString());
 
-  if (promptError || !openPrompts?.length) {
-    return NextResponse.json({ message: 'No open prompts', error: promptError?.message });
+  if (topicError || !openTopics?.length) {
+    return NextResponse.json({ message: 'No open prompts', error: topicError?.message });
   }
 
   const summary: Record<string, number> = {};
@@ -51,12 +51,12 @@ export async function POST(request: NextRequest) {
       .from('pitches')
       .select('prompt_id')
       .eq('user_id', comedian.id)
-      .in('prompt_id', openPrompts.map((p) => p.id));
+      .in('prompt_id', openTopics.map((p) => p.id));
 
     const alreadyPitched = new Set((existingPitches ?? []).map((p) => p.prompt_id));
-    const unPitchedPrompts = openPrompts.filter((p) => !alreadyPitched.has(p.id));
+    const unPitchedTopics = openTopics.filter((p) => !alreadyPitched.has(p.id));
 
-    if (unPitchedPrompts.length === 0) {
+    if (unPitchedTopics.length === 0) {
       skipped.push(`${comedian.username} (already pitched)`);
       continue;
     }
@@ -64,7 +64,7 @@ export async function POST(request: NextRequest) {
     // Generate pitches
     const pitches = generateComedianPitches(
       comedian,
-      unPitchedPrompts as { id: string; body: string; prompt_type: PromptType }[],
+      unPitchedTopics as { id: string; body: string; prompt_type: TopicType }[],
       daySeed,
     );
 
@@ -87,5 +87,5 @@ export async function POST(request: NextRequest) {
     summary[comedian.username] = pitches.length;
   }
 
-  return NextResponse.json({ pitched: summary, skipped, prompts: openPrompts.length });
+  return NextResponse.json({ pitched: summary, skipped, prompts: openTopics.length });
 }

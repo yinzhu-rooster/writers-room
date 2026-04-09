@@ -22,7 +22,7 @@ function mockChain(data: unknown = null, error: unknown = null, count: number | 
 }
 
 function makeGetRequest(params: Record<string, string> = {}) {
-  const url = new URL('http://localhost/api/prompts');
+  const url = new URL('http://localhost/api/topics');
   for (const [key, value] of Object.entries(params)) {
     url.searchParams.set(key, value);
   }
@@ -30,14 +30,14 @@ function makeGetRequest(params: Record<string, string> = {}) {
 }
 
 function makePostRequest(body: unknown) {
-  return new NextRequest('http://localhost/api/prompts', {
+  return new NextRequest('http://localhost/api/topics', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body),
   });
 }
 
-describe('GET /api/prompts', () => {
+describe('GET /api/topics', () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
@@ -57,7 +57,7 @@ describe('GET /api/prompts', () => {
     const prompts = [
       {
         id: 'p1',
-        body: 'Closed prompt',
+        body: 'Closed topic',
         closes_at: new Date(Date.now() - 3600000).toISOString(),
         created_by: 'user-1',
       },
@@ -75,11 +75,11 @@ describe('GET /api/prompts', () => {
     const response = await GET(makeGetRequest({ status: 'closed' }));
     expect(response.status).toBe(200);
     const body = await response.json();
-    expect(body.prompts).toHaveLength(1);
+    expect(body.topics).toHaveLength(1);
   });
 });
 
-describe('POST /api/prompts', () => {
+describe('POST /api/topics', () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });

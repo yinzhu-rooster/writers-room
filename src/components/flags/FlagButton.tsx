@@ -19,7 +19,7 @@ export function FlagButton({ type, targetId, initialFlagged = false }: FlagButto
   const handleFlag = async (reason: FlagReason) => {
     const url = type === 'pitch'
       ? `/api/pitches/${targetId}/flags`
-      : `/api/prompts/${targetId}/flags`;
+      : `/api/topics/${targetId}/flags`;
 
     try {
       const res = await fetch(url, {

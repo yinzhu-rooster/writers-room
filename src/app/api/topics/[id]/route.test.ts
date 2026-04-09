@@ -21,10 +21,10 @@ function mockChain(data: unknown = null, error: unknown = null, count: number | 
 }
 
 function makeRequest(id = 'prompt-1') {
-  return new NextRequest(`http://localhost/api/prompts/${id}`);
+  return new NextRequest(`http://localhost/api/topics/${id}`);
 }
 
-describe('GET /api/prompts/[id]', () => {
+describe('GET /api/topics/[id]', () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });

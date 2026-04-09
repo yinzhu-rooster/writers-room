@@ -4,13 +4,13 @@ import { useState, useEffect, useCallback } from 'react';
 import { useFocusTrap } from '@/hooks/useFocusTrap';
 import { useToast } from '@/components/ui/ToastProvider';
 
-interface CreatePromptModalProps {
+interface CreateTopicModalProps {
   open: boolean;
   onClose: () => void;
   onCreated: () => void;
 }
 
-export function CreatePromptModal({ open, onClose, onCreated }: CreatePromptModalProps) {
+export function CreateTopicModal({ open, onClose, onCreated }: CreateTopicModalProps) {
   const [body, setBody] = useState('');
   const [durationHours, setDurationHours] = useState(24);
   const [error, setError] = useState('');
@@ -46,7 +46,7 @@ export function CreatePromptModal({ open, onClose, onCreated }: CreatePromptModa
     setLoading(true);
 
     try {
-      const res = await fetch('/api/prompts', {
+      const res = await fetch('/api/topics', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

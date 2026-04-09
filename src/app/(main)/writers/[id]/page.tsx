@@ -130,7 +130,7 @@ export default function WriterProfilePage() {
                 closed_topics.map((t) => (
                   <Link
                     key={t.id}
-                    href={`/prompts/${t.id}`}
+                    href={`/topics/${t.id}`}
                     className="block rounded-lg border border-gray-200 p-3 hover:border-gray-300 transition-all"
                   >
                     <p className="text-sm text-gray-900 line-clamp-2">{t.body}</p>

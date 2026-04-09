@@ -7,7 +7,7 @@ export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const { id: promptId } = await params;
+  const { id: topicId } = await params;
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return unauthorized();
@@ -26,7 +26,7 @@ export async function POST(
   const { data: prompt } = await supabase
     .from('prompts')
     .select('closes_at')
-    .eq('id', promptId)
+    .eq('id', topicId)
     .single();
 
   if (!prompt) return notFound('Topic not found');
@@ -36,7 +36,7 @@ export async function POST(
 
   const { error } = await supabase
     .from('prompt_flags')
-    .insert({ prompt_id: promptId, user_id: user.id, reason });
+    .insert({ prompt_id: topicId, user_id: user.id, reason });
 
   if (error) {
     if (error.code === '23505') return conflict('Already flagged');

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
-import { createPromptSchema } from '@/lib/validators/prompt';
+import { createTopicSchema } from '@/lib/validators/topic';
 import { badRequest, unauthorized, serverError, safeJson } from '@/lib/api-error';
 import { rateLimit } from '@/lib/rate-limit';
 import { MAX_PAGE } from '@/lib/constants';
@@ -47,9 +47,9 @@ export async function GET(request: NextRequest) {
   // For closed prompts, fetch stats (unique writers + total reactions) via RPC
   const statsMap = new Map<string, { unique_writers: number; total_reactions: number }>();
   if (status === 'closed' && prompts?.length) {
-    const promptIds = prompts.map(p => p.id);
+    const topicIds = prompts.map(p => p.id);
     const { data: statsData } = await supabase.rpc('get_prompt_stats', {
-      prompt_ids: promptIds,
+      prompt_ids: topicIds,
     });
     if (statsData) {
       for (const row of statsData) {
@@ -101,7 +101,7 @@ export async function GET(request: NextRequest) {
   }
 
   return NextResponse.json({
-    prompts: serialized,
+    topics: serialized,
     total: count ?? 0,
     page,
     page_size: PAGE_SIZE,
@@ -118,7 +118,7 @@ export async function POST(request: NextRequest) {
 
   const body = await safeJson(request);
   if (body instanceof NextResponse) return body;
-  const parsed = createPromptSchema.safeParse(body);
+  const parsed = createTopicSchema.safeParse(body);
   if (!parsed.success) {
     return badRequest(parsed.error.issues[0].message);
   }

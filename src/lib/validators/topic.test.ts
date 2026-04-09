@@ -1,9 +1,9 @@
 import { describe, it, expect } from 'vitest';
-import { createPromptSchema } from './prompt';
+import { createTopicSchema } from './topic';
 
-describe('createPromptSchema', () => {
+describe('createTopicSchema', () => {
   it('accepts valid prompt', () => {
-    const result = createPromptSchema.safeParse({
+    const result = createTopicSchema.safeParse({
       body: 'Write a headline for...',
       prompt_type: 'headline',
       duration_hours: 24,
@@ -12,7 +12,7 @@ describe('createPromptSchema', () => {
   });
 
   it('defaults duration to 24 hours', () => {
-    const result = createPromptSchema.safeParse({
+    const result = createTopicSchema.safeParse({
       body: 'Test prompt',
       prompt_type: 'setup',
     });
@@ -23,21 +23,21 @@ describe('createPromptSchema', () => {
   });
 
   it('rejects empty body', () => {
-    expect(createPromptSchema.safeParse({
+    expect(createTopicSchema.safeParse({
       body: '',
       prompt_type: 'headline',
     }).success).toBe(false);
   });
 
   it('rejects body over 500 chars', () => {
-    expect(createPromptSchema.safeParse({
+    expect(createTopicSchema.safeParse({
       body: 'x'.repeat(501),
       prompt_type: 'headline',
     }).success).toBe(false);
   });
 
   it('rejects invalid prompt_type', () => {
-    expect(createPromptSchema.safeParse({
+    expect(createTopicSchema.safeParse({
       body: 'Test',
       prompt_type: 'invalid',
     }).success).toBe(false);
@@ -45,7 +45,7 @@ describe('createPromptSchema', () => {
 
   it('accepts all valid prompt types', () => {
     for (const type of ['headline', 'setup', 'format', 'topical', 'evergreen']) {
-      expect(createPromptSchema.safeParse({
+      expect(createTopicSchema.safeParse({
         body: 'Test',
         prompt_type: type,
       }).success).toBe(true);
@@ -53,7 +53,7 @@ describe('createPromptSchema', () => {
   });
 
   it('rejects duration below 1', () => {
-    expect(createPromptSchema.safeParse({
+    expect(createTopicSchema.safeParse({
       body: 'Test',
       prompt_type: 'headline',
       duration_hours: 0,
@@ -61,7 +61,7 @@ describe('createPromptSchema', () => {
   });
 
   it('rejects duration above 72', () => {
-    expect(createPromptSchema.safeParse({
+    expect(createTopicSchema.safeParse({
       body: 'Test',
       prompt_type: 'headline',
       duration_hours: 73,
@@ -69,12 +69,12 @@ describe('createPromptSchema', () => {
   });
 
   it('accepts boundary durations', () => {
-    expect(createPromptSchema.safeParse({
+    expect(createTopicSchema.safeParse({
       body: 'Test',
       prompt_type: 'headline',
       duration_hours: 1,
     }).success).toBe(true);
-    expect(createPromptSchema.safeParse({
+    expect(createTopicSchema.safeParse({
       body: 'Test',
       prompt_type: 'headline',
       duration_hours: 72,

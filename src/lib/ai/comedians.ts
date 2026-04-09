@@ -1,4 +1,4 @@
-import type { PromptType } from '@/types/enums';
+import type { TopicType } from '@/types/enums';
 
 export interface AIComedian {
   id: string;
@@ -66,7 +66,7 @@ export const AI_COMEDIANS: AIComedian[] = [
  * Stub pitch pools per comedian per prompt type.
  * When the Anthropic API is wired up, this gets replaced.
  */
-export const COMEDIAN_PITCHES: Record<string, Record<PromptType, string[]>> = {
+export const COMEDIAN_PITCHES: Record<string, Record<TopicType, string[]>> = {
   // DeadpanDave — flat, matter-of-fact absurdity
   [AI_COMEDIANS[0].id]: {
     headline: [

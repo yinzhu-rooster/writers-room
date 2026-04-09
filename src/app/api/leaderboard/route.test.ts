@@ -75,21 +75,21 @@ describe('GET /api/leaderboard', () => {
     expect(body.leaderboard[0].username).toBe('Carol');
   });
 
-  it('returns empty leaderboard for top3_pct when no eligible users', async () => {
-    // Users with total_reps < 100 are not eligible
+  it('returns empty leaderboard for reactions_given when no reactions', async () => {
     const users = [
       { id: 'u1', username: 'Alice', total_laughs: 10, total_reps: 5 },
     ];
     const chain = mockChain(users, null, 1);
     const supabase = {
       from: vi.fn().mockReturnValue(chain),
+      rpc: vi.fn().mockResolvedValue({ data: [], error: null }),
     };
     vi.mocked(createClient).mockResolvedValue(supabase as any);
 
-    const response = await GET(makeRequest({ sort: 'top3_pct' }));
+    const response = await GET(makeRequest({ sort: 'reactions_given' }));
     expect(response.status).toBe(200);
     const body = await response.json();
-    expect(body.sort).toBe('top3_pct');
+    expect(body.sort).toBe('reactions_given');
     expect(body.leaderboard).toEqual([]);
     expect(body.total).toBe(0);
   });
