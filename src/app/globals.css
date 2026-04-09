@@ -7,9 +7,12 @@
   --font-mono: var(--font-geist-mono);
 }
 
-/* Force light color scheme — all components use hardcoded light Tailwind classes. */
 html {
   color-scheme: light;
+}
+
+html.dark {
+  color-scheme: dark;
 }
 
 body {
@@ -17,6 +20,64 @@ body {
   color: var(--color-foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+/* ── Dark mode overrides ── */
+html.dark {
+  --color-background: #111111;
+  --color-foreground: #e5e5e5;
+}
+
+/* Tailwind gray palette remapping for dark mode */
+html.dark .bg-white { background-color: #1a1a1a; }
+html.dark .bg-gray-50 { background-color: #1f1f1f; }
+html.dark .bg-gray-100 { background-color: #262626; }
+html.dark .bg-gray-200 { background-color: #333333; }
+
+html.dark .text-gray-900 { color: #f5f5f5; }
+html.dark .text-gray-700 { color: #d4d4d4; }
+html.dark .text-gray-600 { color: #a3a3a3; }
+html.dark .text-gray-500 { color: #8a8a8a; }
+html.dark .text-gray-400 { color: #737373; }
+
+html.dark .border-gray-200 { border-color: #333333; }
+html.dark .border-gray-300 { border-color: #404040; }
+html.dark .border-gray-100 { border-color: #262626; }
+
+html.dark .hover\:bg-gray-50:hover { background-color: #262626; }
+html.dark .hover\:bg-gray-200:hover { background-color: #404040; }
+html.dark .hover\:border-gray-300:hover { border-color: #525252; }
+
+/* Inputs and form controls */
+html.dark input, html.dark textarea, html.dark select {
+  background-color: #1f1f1f;
+  border-color: #404040;
+  color: #e5e5e5;
+}
+html.dark input:disabled, html.dark textarea:disabled {
+  background-color: #1a1a1a;
+  color: #737373;
+}
+html.dark input:focus, html.dark textarea:focus {
+  border-color: #6366f1;
+}
+
+/* Cards and surfaces */
+html.dark .shadow-lg { box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.4), 0 4px 6px -4px rgb(0 0 0 / 0.3); }
+html.dark .shadow-sm { box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.3); }
+
+/* Indigo own-pitch highlight */
+html.dark .border-indigo-200 { border-color: #3730a3; }
+html.dark .bg-indigo-50\/30 { background-color: rgba(55, 48, 163, 0.15); }
+
+/* Violet AI badge */
+html.dark .bg-violet-100 { background-color: rgba(109, 40, 217, 0.25); }
+html.dark .text-violet-700 { color: #a78bfa; }
+
+/* Red text */
+html.dark .text-red-600 { color: #f87171; }
+
+/* Skeleton loading */
+html.dark .animate-pulse { opacity: 0.3; }
 
 /* Hide scrollbars but keep scrolling */
 .overflow-y-auto {

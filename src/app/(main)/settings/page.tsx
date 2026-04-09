@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useUser } from '@/hooks/useUser';
 import { useToast } from '@/components/ui/ToastProvider';
+import { useTheme } from '@/components/ui/ThemeProvider';
 
 export default function SettingsPage() {
   const { profile, loading: userLoading } = useUser();
@@ -10,6 +11,7 @@ export default function SettingsPage() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const { showToast } = useToast();
+  const { theme, setTheme } = useTheme();
 
   useEffect(() => {
     if (profile?.username) setUsername(profile.username);
@@ -91,7 +93,21 @@ export default function SettingsPage() {
 
       <div className="mt-6 pt-6 border-t border-gray-200">
         <h2 className="text-sm font-medium text-gray-700 mb-2">Display Preferences</h2>
-        <p className="text-sm text-gray-400">Coming soon</p>
+        <div className="flex gap-2 mt-3">
+          {(['light', 'dark', 'system'] as const).map((t) => (
+            <button
+              key={t}
+              onClick={() => setTheme(t)}
+              className={`px-4 py-2 text-sm rounded-full transition-colors ${
+                theme === t
+                  ? 'bg-indigo-600 text-white'
+                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+              }`}
+            >
+              {t.charAt(0).toUpperCase() + t.slice(1)}
+            </button>
+          ))}
+        </div>
       </div>
     </div>
   );

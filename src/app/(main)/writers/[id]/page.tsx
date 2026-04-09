@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { LoadingSkeleton } from '@/components/ui/LoadingSkeleton';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { AiBadge } from '@/components/ui/AiBadge';
+import { UserAvatar } from '@/components/ui/UserAvatar';
 
 interface ProfileData {
   user: {
@@ -64,13 +65,7 @@ export default function WriterProfilePage() {
     <div>
       {/* Profile header */}
       <div className="flex items-center gap-4 mb-6">
-        {user.avatar_url ? (
-          <img src={user.avatar_url} alt={user.username} className="h-16 w-16 rounded-full" referrerPolicy="no-referrer" />
-        ) : (
-          <div className="h-16 w-16 rounded-full bg-indigo-500 flex items-center justify-center text-white text-2xl font-bold shrink-0">
-            {user.username?.[0]?.toUpperCase() ?? 'U'}
-          </div>
-        )}
+        <UserAvatar username={user.username} avatarUrl={user.avatar_url} size="lg" />
         <div>
           <div className="flex items-center gap-2">
             <h1 className="text-xl font-bold text-gray-900">{user.username}</h1>

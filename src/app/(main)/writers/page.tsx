@@ -6,6 +6,7 @@ import { LoadingSkeleton } from '@/components/ui/LoadingSkeleton';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { useInfiniteScroll } from '@/hooks/useInfiniteScroll';
 import { AiBadge } from '@/components/ui/AiBadge';
+import { UserAvatar } from '@/components/ui/UserAvatar';
 
 type SortMode = 'name' | 'name_desc' | 'newest' | 'oldest';
 
@@ -107,13 +108,7 @@ export default function WritersPage() {
               href={`/writers/${w.id}`}
               className="flex items-center gap-3 rounded-lg border border-gray-200 px-4 py-3 hover:border-gray-300 hover:shadow-sm transition-all"
             >
-              {w.avatar_url ? (
-                <img src={w.avatar_url} alt={w.username} className="h-9 w-9 rounded-full" referrerPolicy="no-referrer" />
-              ) : (
-                <div className="h-9 w-9 rounded-full bg-indigo-500 flex items-center justify-center text-white text-sm font-medium shrink-0">
-                  {w.username?.[0]?.toUpperCase() ?? 'U'}
-                </div>
-              )}
+              <UserAvatar username={w.username} avatarUrl={w.avatar_url} />
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2">
                   <span className="text-sm font-medium text-gray-900 truncate">{w.username}</span>
