@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { LoadingSkeleton } from '@/components/ui/LoadingSkeleton';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { useInfiniteScroll } from '@/hooks/useInfiniteScroll';
+import { AiBadge } from '@/components/ui/AiBadge';
 
 type SortMode = 'name' | 'newest';
 
@@ -111,11 +112,7 @@ export default function WritersPage() {
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2">
                   <span className="text-sm font-medium text-gray-900 truncate">{w.username}</span>
-                  {w.is_ai && (
-                    <span className="inline-flex items-center rounded bg-violet-100 px-1.5 py-0.5 text-[10px] font-semibold text-violet-700 uppercase tracking-wide">
-                      AI
-                    </span>
-                  )}
+                  {w.is_ai && <AiBadge />}
                 </div>
                 <span className="text-xs text-gray-400">
                   {w.total_reps} pitches

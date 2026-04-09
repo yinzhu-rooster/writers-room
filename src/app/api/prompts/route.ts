@@ -61,14 +61,38 @@ export async function GET(request: NextRequest) {
     }
   }
 
-  // Anonymize creator on open prompts, attach stats
+  // For closed prompts, fetch creator usernames + is_ai
+  const creatorMap = new Map<string, { username: string; is_ai: boolean }>();
+  if (status === 'closed' && prompts?.length) {
+    const creatorIds = [...new Set(prompts.map(p => p.created_by).filter(Boolean))];
+    if (creatorIds.length > 0) {
+      const { data: creators } = await supabase
+        .from('users')
+        .select('id, username, is_ai')
+        .in('id', creatorIds);
+      if (creators) {
+        for (const c of creators) {
+          if (c.username) creatorMap.set(c.id, { username: c.username, is_ai: c.is_ai });
+        }
+      }
+    }
+  }
+
+  // Anonymize creator on open prompts, attach stats + creator username
   const serialized = (prompts ?? []).map((p) => {
     const isOpen = new Date(p.closes_at) > new Date();
     const stats = statsMap.get(p.id) ?? { unique_writers: 0, total_reactions: 0 };
     if (isOpen && p.created_by !== user?.id) {
-      return { ...p, created_by: null, unique_writers: 0, total_reactions: 0 };
+      return { ...p, created_by: null, created_by_username: null, created_by_is_ai: false, unique_writers: 0, total_reactions: 0 };
     }
-    return { ...p, unique_writers: stats.unique_writers, total_reactions: stats.total_reactions };
+    const creator = p.created_by ? creatorMap.get(p.created_by) : null;
+    return {
+      ...p,
+      created_by_username: creator?.username ?? null,
+      created_by_is_ai: creator?.is_ai ?? false,
+      unique_writers: stats.unique_writers,
+      total_reactions: stats.total_reactions,
+    };
   });
 
   // Sort by most_reactions client-side (DB doesn't have this column)

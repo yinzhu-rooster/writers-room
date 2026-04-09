@@ -2,10 +2,11 @@
 
 import Link from 'next/link';
 import { CountdownTimer } from './CountdownTimer';
+import { AiBadge } from '@/components/ui/AiBadge';
 import type { Prompt } from '@/types/database';
 
 interface PromptCardProps {
-  prompt: Prompt & { unique_writers?: number; total_reactions?: number };
+  prompt: Prompt & { unique_writers?: number; total_reactions?: number; created_by_username?: string | null; created_by_is_ai?: boolean };
   isOpen: boolean;
 }
 
@@ -23,7 +24,13 @@ export function PromptCard({ prompt, isOpen }: PromptCardProps) {
       <div className="flex items-start justify-between gap-3">
         <div className="flex-1 min-w-0">
           <p className="text-gray-900 font-medium line-clamp-2">{prompt.body}</p>
-          <div className="mt-2 flex items-center gap-3 text-sm text-gray-500">
+          {!isOpen && prompt.created_by_username && (
+            <div className="mt-2 flex items-center gap-1.5 text-xs text-gray-500">
+              <span>by {prompt.created_by_username}</span>
+              {prompt.created_by_is_ai && <AiBadge />}
+            </div>
+          )}
+          <div className={`${!isOpen && prompt.created_by_username ? 'mt-1' : 'mt-2'} flex items-center gap-3 text-sm text-gray-500`}>
             {!isOpen && (prompt as { unique_writers?: number }).unique_writers ? (
               <span>{(prompt as { unique_writers?: number }).unique_writers} writers</span>
             ) : null}

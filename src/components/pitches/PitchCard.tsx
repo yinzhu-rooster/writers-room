@@ -4,6 +4,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { ReactionBar } from '@/components/reactions/ReactionBar';
 import { ReactionCounts } from '@/components/reactions/ReactionCounts';
 import { RankBadge } from '@/components/pitches/RankBadge';
+import { AiBadge } from '@/components/ui/AiBadge';
 import type { ReactionType } from '@/types/enums';
 
 export interface PitchData {
@@ -87,7 +88,7 @@ export function PitchCard({ pitch, isOpen, onReactionChange, onEdit, onDelete }:
             {pitch.is_own && <span className="text-indigo-600 font-medium">You</span>}
             {pitch.edited_at && <span>(edited)</span>}
             {!isOpen && pitch.is_revealed && pitch.username && !pitch.is_own && (
-              <span className="text-gray-500">by {pitch.username}</span>
+              <span className="text-gray-500 inline-flex items-center gap-1.5">by {pitch.username}{pitch.is_ai && <AiBadge />}</span>
             )}
           </div>
         </div>

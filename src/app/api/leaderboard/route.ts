@@ -18,7 +18,7 @@ export async function GET(request: NextRequest) {
   if (sort === 'total_laughs' || sort === 'total_reps') {
     const { data, count } = await supabase
       .from('users')
-      .select('id, username, avatar_url, total_laughs, total_reps', { count: 'exact' })
+      .select('id, username, avatar_url, is_ai, total_laughs, total_reps', { count: 'exact' })
       .order(sort, { ascending: false })
       .range(offset, offset + PAGE_SIZE - 1);
 
@@ -35,7 +35,7 @@ export async function GET(request: NextRequest) {
   // Limit to top 1000 users by total_laughs to avoid loading entire table
   const { data: users } = await supabase
     .from('users')
-    .select('id, username, avatar_url, total_laughs, total_reps')
+    .select('id, username, avatar_url, is_ai, total_laughs, total_reps')
     .order('total_laughs', { ascending: false })
     .limit(1000);
 

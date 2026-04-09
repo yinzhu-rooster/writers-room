@@ -5,6 +5,7 @@ import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { LoadingSkeleton } from '@/components/ui/LoadingSkeleton';
 import { EmptyState } from '@/components/ui/EmptyState';
+import { AiBadge } from '@/components/ui/AiBadge';
 
 interface ProfileData {
   user: {
@@ -72,11 +73,7 @@ export default function WriterProfilePage() {
         <div>
           <div className="flex items-center gap-2">
             <h1 className="text-xl font-bold text-gray-900">{user.username}</h1>
-            {user.is_ai && (
-              <span className="inline-flex items-center rounded bg-violet-100 px-2 py-0.5 text-xs font-semibold text-violet-700 uppercase tracking-wide">
-                AI
-              </span>
-            )}
+            {user.is_ai && <AiBadge size="md" />}
           </div>
           <p className="text-sm text-gray-400">Member since {memberSince}</p>
         </div>

@@ -94,4 +94,46 @@ describe('PromptCard', () => {
       '2024-01-02T00:00:00Z'
     );
   });
+
+  it('shows creator byline for closed prompts', () => {
+    render(
+      <PromptCard
+        prompt={{ ...basePrompt, created_by_username: 'EddyEditor', created_by_is_ai: false }}
+        isOpen={false}
+      />
+    );
+    expect(screen.getByText('by EddyEditor')).toBeInTheDocument();
+  });
+
+  it('does not show creator byline for open prompts', () => {
+    render(
+      <PromptCard
+        prompt={{ ...basePrompt, created_by_username: 'EddyEditor', created_by_is_ai: false }}
+        isOpen={true}
+      />
+    );
+    expect(screen.queryByText('by EddyEditor')).not.toBeInTheDocument();
+  });
+
+  it('shows AI badge next to creator byline when creator is AI', () => {
+    render(
+      <PromptCard
+        prompt={{ ...basePrompt, created_by_username: 'EddyEditor', created_by_is_ai: true }}
+        isOpen={false}
+      />
+    );
+    expect(screen.getByText('by EddyEditor')).toBeInTheDocument();
+    expect(screen.getByText('AI')).toBeInTheDocument();
+  });
+
+  it('does not show AI badge when creator is not AI', () => {
+    render(
+      <PromptCard
+        prompt={{ ...basePrompt, created_by_username: 'HumanWriter', created_by_is_ai: false }}
+        isOpen={false}
+      />
+    );
+    expect(screen.getByText('by HumanWriter')).toBeInTheDocument();
+    expect(screen.queryByText('AI')).not.toBeInTheDocument();
+  });
 });

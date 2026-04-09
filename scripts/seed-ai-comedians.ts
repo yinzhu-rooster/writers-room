@@ -22,6 +22,7 @@ const COMEDIANS = [
   { id: 'a1000001-0000-0000-0000-000000000006', username: 'OneLinerLisa', email: 'one-liner-lisa@writersroom.ai' },
   { id: 'a1000001-0000-0000-0000-000000000007', username: 'RoastMasterMike', email: 'roast-master-mike@writersroom.ai' },
   { id: 'a1000001-0000-0000-0000-000000000008', username: 'WholesomeWendy', email: 'wholesome-wendy@writersroom.ai' },
+  { id: 'a1000001-0000-0000-0000-000000000009', username: 'EddyEditor', email: 'eddy-editor@writersroom.ai' },
 ];
 
 async function main() {

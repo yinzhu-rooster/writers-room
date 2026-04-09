@@ -180,4 +180,24 @@ describe('PitchCard', () => {
     render(<PitchCard pitch={basePitch} isOpen={false} />);
     expect(screen.queryByText(/#\d/)).not.toBeInTheDocument();
   });
+
+  it('shows AI badge next to username for AI comedians on closed prompts', () => {
+    render(
+      <PitchCard
+        pitch={{ ...basePitch, is_own: false, is_revealed: true, username: 'DeadpanDave', is_ai: true }}
+        isOpen={false}
+      />
+    );
+    expect(screen.getByText('AI')).toBeInTheDocument();
+  });
+
+  it('does not show AI badge for non-AI users on closed prompts', () => {
+    render(
+      <PitchCard
+        pitch={{ ...basePitch, is_own: false, is_revealed: true, username: 'humanwriter', is_ai: false }}
+        isOpen={false}
+      />
+    );
+    expect(screen.queryByText('AI')).not.toBeInTheDocument();
+  });
 });

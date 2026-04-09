@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback, useRef } from 'react';
 import { LoadingSkeleton } from '@/components/ui/LoadingSkeleton';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { useInfiniteScroll } from '@/hooks/useInfiniteScroll';
+import { AiBadge } from '@/components/ui/AiBadge';
 
 type SortMode = 'total_laughs' | 'avg_laughs' | 'total_reps' | 'top3_pct';
 
@@ -18,6 +19,7 @@ interface LeaderboardEntry {
   id: string;
   username: string;
   avatar_url: string | null;
+  is_ai: boolean;
   total_laughs: number;
   total_reps: number;
   avg_laughs?: number;
@@ -122,9 +124,12 @@ export default function LeaderboardPage() {
                 {i + 1}
               </span>
               <div className="flex-1 min-w-0">
-                <span className="text-sm font-medium text-gray-900 truncate">
-                  {entry.username ?? 'Anonymous'}
-                </span>
+                <div className="flex items-center gap-1.5">
+                  <span className="text-sm font-medium text-gray-900 truncate">
+                    {entry.username ?? 'Anonymous'}
+                  </span>
+                  {entry.is_ai && <AiBadge />}
+                </div>
               </div>
               <span className="text-sm font-bold text-indigo-600">
                 {getValue(entry)}
