@@ -80,7 +80,7 @@ export async function POST(request: NextRequest) {
     );
 
     if (insertError) {
-      console.error(`Failed to insert pitches for ${comedian.username}:`, insertError.message);
+      console.error(`Failed to insert pitches for ${comedian.username}`);
       continue;
     }
 

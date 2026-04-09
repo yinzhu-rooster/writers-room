@@ -49,7 +49,6 @@ export async function GET(
 
   const { data: pitches, count, error } = await query;
   if (error) {
-    console.error('Pitches load error:', error.message, error.details, error.code);
     return serverError('Failed to load pitches');
   }
 
@@ -101,36 +100,31 @@ export async function POST(
     return badRequest('This topic is closed', 'PROMPT_CLOSED');
   }
 
-  // Check pitch cap
+  // Atomic pitch insert with cap enforcement (prevents race conditions)
   const pitchCap = await getConfigInt('default_pitch_cap_per_prompt');
-  const { count } = await supabase
-    .from('pitches')
-    .select('*', { count: 'exact', head: true })
-    .eq('prompt_id', topicId)
-    .eq('user_id', user.id)
-    .is('deleted_at', null);
-
-  if ((count ?? 0) >= pitchCap) {
-    return badRequest(
-      `You've hit the pitch limit of ${pitchCap} for this topic. You can delete a pitch to add a new one.`,
-      'PITCH_CAP'
-    );
-  }
-
-  const { data: pitch, error } = await supabase
-    .from('pitches')
-    .insert({
-      prompt_id: topicId,
-      user_id: user.id,
-      body: parsed.data.body,
-    })
-    .select()
-    .single();
+  const { data: pitchId, error } = await supabase.rpc('insert_pitch_with_cap', {
+    p_prompt_id: topicId,
+    p_user_id: user.id,
+    p_body: parsed.data.body,
+    p_cap: pitchCap,
+  });
 
   if (error) {
-    console.error('Pitch insert error:', error.message, error.details, error.code);
+    if (error.message?.includes('PITCH_CAP_EXCEEDED')) {
+      return badRequest(
+        `You've hit the pitch limit of ${pitchCap} for this topic. You can delete a pitch to add a new one.`,
+        'PITCH_CAP'
+      );
+    }
     return serverError('Failed to create pitch');
   }
+
+  // Fetch the created pitch to return full object
+  const { data: pitch } = await supabase
+    .from('pitches')
+    .select()
+    .eq('id', pitchId)
+    .single();
 
   return NextResponse.json(pitch, { status: 201 });
 }

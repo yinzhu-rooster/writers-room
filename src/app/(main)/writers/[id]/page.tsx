@@ -82,10 +82,6 @@ export default function WriterProfilePage() {
           <div className="text-sm text-gray-500">Pitches</div>
         </div>
         <div className="rounded-xl border border-gray-200 p-4 text-center">
-          <div className="text-2xl font-bold text-gray-900">{user.total_laughs}</div>
-          <div className="text-sm text-gray-500">Laughs</div>
-        </div>
-        <div className="rounded-xl border border-gray-200 p-4 text-center">
           <div className="text-2xl font-bold text-gray-900">{best_finish ?? '-'}</div>
           <div className="text-sm text-gray-500">Best Finish</div>
         </div>

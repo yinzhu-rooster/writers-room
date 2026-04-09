@@ -33,14 +33,18 @@ export default function WritersPage() {
     hasMore && !loadingMore && !loading,
   );
 
-  const sortRef = useRef(sort);
+  const abortRef = useRef<AbortController | null>(null);
 
   const loadPage = useCallback(async (pageNum: number, sortBy: SortMode, append: boolean) => {
+    abortRef.current?.abort();
+    const controller = new AbortController();
+    abortRef.current = controller;
+
     if (append) setLoadingMore(true); else setLoading(true);
+    setError('');
     try {
-      const res = await fetch(`/api/users?sort=${sortBy}&page=${pageNum}`);
+      const res = await fetch(`/api/users?sort=${sortBy}&page=${pageNum}`, { signal: controller.signal });
       if (!res.ok) throw new Error('Failed to load');
-      if (sortRef.current !== sortBy) return;
       const data = await res.json();
       const newWriters = data.writers ?? [];
       const total = data.total ?? 0;
@@ -53,16 +57,15 @@ export default function WritersPage() {
     } catch (err) {
       if (err instanceof DOMException && err.name === 'AbortError') return;
       setError('Failed to load writers');
-      console.error('Failed to load writers:', err);
     }
     if (append) setLoadingMore(false); else setLoading(false);
   }, []);
 
   useEffect(() => {
-    sortRef.current = sort;
     setPage(1);
     setHasMore(true);
     loadPage(1, sort, false);
+    return () => abortRef.current?.abort();
   }, [loadPage, sort]);
 
   useEffect(() => {
@@ -71,27 +74,19 @@ export default function WritersPage() {
 
   return (
     <div>
-      <h1 className="text-xl font-bold text-gray-900 mb-4">Writers</h1>
-
-      <div className="flex gap-2 mb-4 overflow-x-auto pb-1 -mb-1">
-        {([
-          { value: 'name' as const, label: 'A-Z' },
-          { value: 'name_desc' as const, label: 'Z-A' },
-          { value: 'newest' as const, label: 'Newest' },
-          { value: 'oldest' as const, label: 'Oldest' },
-        ]).map((s) => (
-          <button
-            key={s.value}
-            onClick={() => setSort(s.value)}
-            className={`px-4 py-2 text-sm rounded-full whitespace-nowrap transition-colors ${
-              sort === s.value
-                ? 'bg-indigo-600 text-white'
-                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-            }`}
-          >
-            {s.label}
-          </button>
-        ))}
+      <div className="flex items-center justify-between mb-4">
+        <h1 className="text-xl font-bold text-gray-900">Writers</h1>
+        <select
+          value={sort}
+          onChange={(e) => setSort(e.target.value as SortMode)}
+          aria-label="Sort by"
+          className="text-sm border border-gray-200 rounded-lg px-3 py-1.5 text-gray-700 bg-white"
+        >
+          <option value="name">A-Z</option>
+          <option value="name_desc">Z-A</option>
+          <option value="newest">Newest</option>
+          <option value="oldest">Oldest</option>
+        </select>
       </div>
 
       {error ? (

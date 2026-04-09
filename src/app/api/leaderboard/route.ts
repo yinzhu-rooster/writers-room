@@ -6,6 +6,10 @@ const PAGE_SIZE = 100;
 const VALID_SORTS = ['total_laughs', 'avg_laughs', 'total_reps', 'reactions_given'] as const;
 type SortMode = typeof VALID_SORTS[number];
 
+const CACHE_HEADERS = {
+  'Cache-Control': 'public, s-maxage=30, stale-while-revalidate=60',
+};
+
 export async function GET(request: NextRequest) {
   const supabase = await createClient();
 
@@ -28,7 +32,7 @@ export async function GET(request: NextRequest) {
       page,
       page_size: PAGE_SIZE,
       sort,
-    });
+    }, { headers: CACHE_HEADERS });
   }
 
   // For avg_laughs and reactions_given, compute on-read
@@ -39,7 +43,7 @@ export async function GET(request: NextRequest) {
     .order('total_laughs', { ascending: false })
     .limit(1000);
 
-  if (!users) return NextResponse.json({ leaderboard: [], total: 0, page, page_size: PAGE_SIZE, sort });
+  if (!users) return NextResponse.json({ leaderboard: [], total: 0, page, page_size: PAGE_SIZE, sort }, { headers: CACHE_HEADERS });
 
   if (sort === 'avg_laughs') {
     const sorted = users
@@ -53,7 +57,7 @@ export async function GET(request: NextRequest) {
       page,
       page_size: PAGE_SIZE,
       sort,
-    });
+    }, { headers: CACHE_HEADERS });
   }
 
   if (sort === 'reactions_given') {
@@ -64,7 +68,7 @@ export async function GET(request: NextRequest) {
     });
 
     if (!ranked?.length) {
-      return NextResponse.json({ leaderboard: [], total: 0, page, page_size: PAGE_SIZE, sort });
+      return NextResponse.json({ leaderboard: [], total: 0, page, page_size: PAGE_SIZE, sort }, { headers: CACHE_HEADERS });
     }
 
     // Fetch user profiles for the ranked user IDs
@@ -95,8 +99,8 @@ export async function GET(request: NextRequest) {
       page,
       page_size: PAGE_SIZE,
       sort,
-    });
+    }, { headers: CACHE_HEADERS });
   }
 
-  return NextResponse.json({ leaderboard: [], total: 0, page, page_size: PAGE_SIZE, sort });
+  return NextResponse.json({ leaderboard: [], total: 0, page, page_size: PAGE_SIZE, sort }, { headers: CACHE_HEADERS });
 }

@@ -17,27 +17,46 @@ export function CountdownTimer({ closesAt, onExpired }: { closesAt: string; onEx
   const closesAtMs = useMemo(() => new Date(closesAt).getTime(), [closesAt]);
   const [timeLeft, setTimeLeft] = useState(() => closesAtMs - Date.now());
   const onExpiredRef = useRef(onExpired);
+  const elementRef = useRef<HTMLSpanElement>(null);
 
   useEffect(() => {
     onExpiredRef.current = onExpired;
   }, [onExpired]);
 
   useEffect(() => {
-    const interval = setInterval(() => {
+    let interval: ReturnType<typeof setInterval> | null = null;
+
+    const tick = () => {
       const remaining = closesAtMs - Date.now();
       setTimeLeft(remaining);
       if (remaining <= 0) {
-        clearInterval(interval);
+        if (interval) clearInterval(interval);
         onExpiredRef.current?.();
       }
-    }, 1000);
-    return () => clearInterval(interval);
+    };
+
+    const startTicking = () => {
+      tick();
+      interval = setInterval(tick, 1000);
+    };
+
+    const stopTicking = () => {
+      if (interval) { clearInterval(interval); interval = null; }
+    };
+
+    const observer = new IntersectionObserver(
+      ([entry]) => { entry.isIntersecting ? startTicking() : stopTicking(); },
+      { threshold: 0 }
+    );
+
+    if (elementRef.current) observer.observe(elementRef.current);
+    return () => { stopTicking(); observer.disconnect(); };
   }, [closesAtMs]);
 
   const isClosed = timeLeft <= 0;
 
   return (
-    <span className={`text-sm font-medium ${isClosed ? 'text-gray-400' : 'text-amber-600'}`}>
+    <span ref={elementRef} className={`text-sm font-medium ${isClosed ? 'text-gray-400' : 'text-amber-600'}`}>
       {formatTimeLeft(timeLeft)}
     </span>
   );

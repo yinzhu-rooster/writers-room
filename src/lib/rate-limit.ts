@@ -33,7 +33,9 @@ function ensureCleanup() {
  *
  * NOTE: This is per-isolate only. In serverless environments (Vercel),
  * each cold start gets its own store, so this is not a hard guarantee.
- * For production, replace with an external store (e.g. Upstash Redis).
+ *
+ * TODO: Replace with Upstash Redis for production:
+ *   npm install @upstash/ratelimit @upstash/redis
  *
  * Returns null if allowed, or a 429 NextResponse if rate-limited.
  */

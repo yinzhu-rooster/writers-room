@@ -43,7 +43,7 @@ export default function TopicDetailPage() {
   const isOpen = new Date(topic.closes_at) > new Date();
 
   return (
-    <div className="flex flex-col h-[calc(100vh-3.5rem-6rem)] md:h-[calc(100vh-3.5rem-1.5rem)]">
+    <div className="flex flex-col h-[calc(100dvh-3.5rem-6rem)] md:h-[calc(100dvh-3.5rem-1.5rem)]">
       {/* Sticky top: prompt title only */}
       <div className="shrink-0 border-b border-gray-100 pb-3 mb-4">
         <div className="flex items-center gap-2 mb-1">

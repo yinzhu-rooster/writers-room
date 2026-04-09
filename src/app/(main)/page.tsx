@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { TopicCard } from '@/components/topics/TopicCard';
 import { CreateTopicModal } from '@/components/topics/CreateTopicModal';
 import { LoadingSkeleton } from '@/components/ui/LoadingSkeleton';
@@ -16,12 +16,17 @@ export default function OpenTopicsPage() {
   const [loadingMore, setLoadingMore] = useState(false);
   const [showCreate, setShowCreate] = useState(false);
   const [error, setError] = useState('');
+  const abortRef = useRef<AbortController | null>(null);
 
   const loadPage = useCallback(async (pageNum: number, append: boolean) => {
+    abortRef.current?.abort();
+    const controller = new AbortController();
+    abortRef.current = controller;
+
     if (append) setLoadingMore(true); else setLoading(true);
     setError('');
     try {
-      const res = await fetch(`/api/topics?status=open&page=${pageNum}`);
+      const res = await fetch(`/api/topics?status=open&page=${pageNum}`, { signal: controller.signal });
       if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error ?? 'Failed to load');
       const data = await res.json();
       const newTopics = data.topics ?? [];
@@ -33,12 +38,16 @@ export default function OpenTopicsPage() {
       }
       setHasMore(pageNum * (data.page_size ?? 100) < total);
     } catch (e) {
+      if (e instanceof DOMException && e.name === 'AbortError') return;
       setError(e instanceof Error ? e.message : 'Failed to load');
     }
     if (append) setLoadingMore(false); else setLoading(false);
   }, []);
 
-  useEffect(() => { loadPage(1, false); }, [loadPage]);
+  useEffect(() => {
+    loadPage(1, false);
+    return () => abortRef.current?.abort();
+  }, [loadPage]);
 
   useEffect(() => {
     if (page > 1) loadPage(page, true);

@@ -6,7 +6,14 @@ import { usernameSchema } from '@/lib/validators/username';
 
 const updateProfileSchema = z.object({
   username: usernameSchema.optional(),
-  avatar_url: z.string().url().refine(u => u.startsWith('https://'), { message: 'Avatar URL must use HTTPS' }).nullable().optional(),
+  avatar_url: z.string().url().refine(u => {
+    if (!u.startsWith('https://')) return false;
+    const host = new URL(u).hostname;
+    return [
+      'lh3.googleusercontent.com',
+      'avatars.githubusercontent.com',
+    ].some(allowed => host === allowed || host.endsWith('.supabase.co'));
+  }, { message: 'Avatar URL must be from Google, GitHub, or Supabase' }).nullable().optional(),
 });
 
 export async function PATCH(request: NextRequest) {

@@ -24,8 +24,10 @@ export default function AdminFlagsPage() {
   const [topicFlags, setTopicFlags] = useState<TopicFlagEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [acting, setActing] = useState<string | null>(null);
 
-  useEffect(() => {
+  const loadFlags = () => {
+    setLoading(true);
     fetch('/api/admin/flags')
       .then(async (r) => {
         if (!r.ok) {
@@ -41,7 +43,26 @@ export default function AdminFlagsPage() {
         setLoading(false);
       })
       .catch((e) => { setError(e.message); setLoading(false); });
-  }, []);
+  };
+
+  useEffect(() => { loadFlags(); }, []);
+
+  const handleAction = async (flagId: string, flagType: 'pitch' | 'topic', action: 'dismiss' | 'delete_content') => {
+    if (action === 'delete_content' && !confirm('Delete this content? This cannot be undone.')) return;
+    setActing(flagId);
+    try {
+      const res = await fetch('/api/admin/flags', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ flag_id: flagId, flag_type: flagType, action }),
+      });
+      if (!res.ok) throw new Error('Action failed');
+      loadFlags();
+    } catch {
+      setError('Failed to perform action');
+    }
+    setActing(null);
+  };
 
   if (loading) return <LoadingSkeleton count={2} height="h-16" />;
   if (error) return <p className="text-red-600">{error}</p>;
@@ -60,6 +81,22 @@ export default function AdminFlagsPage() {
             </div>
             <p className="text-gray-700 mt-1 line-clamp-2">{f.pitches?.body ?? '[deleted]'}</p>
             <p className="text-gray-400 text-xs mt-1">Flagged by {f.users?.username ?? 'unknown'}</p>
+            <div className="flex gap-2 mt-2">
+              <button
+                onClick={() => handleAction(f.id, 'pitch', 'dismiss')}
+                disabled={acting === f.id}
+                className="text-xs px-2 py-1 rounded bg-gray-100 text-gray-600 hover:bg-gray-200 disabled:opacity-50"
+              >
+                Dismiss
+              </button>
+              <button
+                onClick={() => handleAction(f.id, 'pitch', 'delete_content')}
+                disabled={acting === f.id}
+                className="text-xs px-2 py-1 rounded bg-red-50 text-red-600 hover:bg-red-100 disabled:opacity-50"
+              >
+                Delete Pitch
+              </button>
+            </div>
           </div>
         ))}
         {pitchFlags.length === 0 && <p className="text-sm text-gray-500">No pitch flags</p>}
@@ -75,6 +112,22 @@ export default function AdminFlagsPage() {
             </div>
             <p className="text-gray-700 mt-1 line-clamp-2">{f.prompts?.body ?? '[deleted]'}</p>
             <p className="text-gray-400 text-xs mt-1">Flagged by {f.users?.username ?? 'unknown'}</p>
+            <div className="flex gap-2 mt-2">
+              <button
+                onClick={() => handleAction(f.id, 'topic', 'dismiss')}
+                disabled={acting === f.id}
+                className="text-xs px-2 py-1 rounded bg-gray-100 text-gray-600 hover:bg-gray-200 disabled:opacity-50"
+              >
+                Dismiss
+              </button>
+              <button
+                onClick={() => handleAction(f.id, 'topic', 'delete_content')}
+                disabled={acting === f.id}
+                className="text-xs px-2 py-1 rounded bg-red-50 text-red-600 hover:bg-red-100 disabled:opacity-50"
+              >
+                Delete Topic
+              </button>
+            </div>
           </div>
         ))}
         {topicFlags.length === 0 && <p className="text-sm text-gray-500">No topic flags</p>}

@@ -63,7 +63,7 @@ export async function POST(request: NextRequest) {
         )
       );
       const hasUpdateError = results.some(({ error: updateError }) => {
-        if (updateError) console.error('Failed to update pitch:', updateError.message);
+        if (updateError) console.error('Failed to update pitch');
         return !!updateError;
       });
 
@@ -77,7 +77,7 @@ export async function POST(request: NextRequest) {
       .update({ is_closed_processed: true })
       .eq('id', prompt.id);
     if (markError) {
-      console.error(`Failed to mark prompt ${prompt.id} as processed:`, markError.message);
+      console.error(`Failed to mark prompt ${prompt.id} as processed`);
       continue;
     }
 

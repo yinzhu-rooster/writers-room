@@ -17,10 +17,15 @@ export default function StatsPage() {
   const [error, setError] = useState('');
 
   useEffect(() => {
-    fetch('/api/stats')
+    const controller = new AbortController();
+    fetch('/api/stats', { signal: controller.signal })
       .then((r) => { if (!r.ok) throw new Error('Failed to load'); return r.json(); })
       .then((data) => { setStats(data); setLoading(false); })
-      .catch((err) => { setError(err.message); setLoading(false); });
+      .catch((err) => {
+        if (err instanceof DOMException && err.name === 'AbortError') return;
+        setError(err.message); setLoading(false);
+      });
+    return () => controller.abort();
   }, []);
 
   if (loading) return <LoadingSkeleton count={2} />;

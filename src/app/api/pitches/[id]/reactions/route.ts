@@ -39,28 +39,23 @@ export async function POST(
     return badRequest('This prompt is closed', 'PROMPT_CLOSED');
   }
 
-  // Atomic toggle: try upsert first, then check if we need to delete (same type = toggle off)
-  // Use a single upsert to avoid check-then-act race condition
-  const { data: existing } = await supabase
+  // Try to delete an existing reaction of the same type (toggle off).
+  // Using compound key match makes this safe against concurrent requests.
+  const { data: deleted } = await supabase
     .from('reactions')
-    .select('id, reaction_type')
+    .delete()
     .eq('pitch_id', pitchId)
     .eq('user_id', user.id)
+    .eq('reaction_type', reaction_type)
+    .select()
     .maybeSingle();
 
-  if (existing?.reaction_type === reaction_type) {
-    // Toggle off — delete by compound key to avoid stale ID race
-    const { error: delError } = await supabase
-      .from('reactions')
-      .delete()
-      .eq('pitch_id', pitchId)
-      .eq('user_id', user.id)
-      .eq('reaction_type', reaction_type);
-    if (delError) return serverError('Failed to remove reaction');
+  if (deleted) {
+    // Had the same reaction — toggled off
     return NextResponse.json({ reaction: null });
   }
 
-  // Upsert handles both new reactions and reaction type changes atomically
+  // Upsert handles both new reactions and type changes atomically
   const { data: upserted, error } = await supabase
     .from('reactions')
     .upsert(

@@ -117,14 +117,10 @@ describe('POST /api/topics/[id]/pitches', () => {
     const user = { id: 'user-1' };
     const prompt = { closes_at: new Date(Date.now() + 3600000).toISOString() }; // open
 
-    let callCount = 0;
     const supabase = {
       auth: { getUser: vi.fn().mockResolvedValue({ data: { user } }) },
-      from: vi.fn().mockImplementation(() => {
-        callCount++;
-        if (callCount === 1) return mockChain(prompt); // prompt lookup
-        return mockChain(null, null, 3); // pitch count: at cap (getConfigInt returns 3)
-      }),
+      from: vi.fn().mockReturnValue(mockChain(prompt)),
+      rpc: vi.fn().mockResolvedValue({ data: null, error: { message: 'PITCH_CAP_EXCEEDED' } }),
     };
     vi.mocked(createClient).mockResolvedValue(supabase as any);
 
@@ -139,15 +135,15 @@ describe('POST /api/topics/[id]/pitches', () => {
     const prompt = { closes_at: new Date(Date.now() + 3600000).toISOString() }; // open
     const newPitch = { id: 'pitch-new', body: 'My pitch', user_id: 'user-1' };
 
-    let callCount = 0;
+    let fromCallCount = 0;
     const supabase = {
       auth: { getUser: vi.fn().mockResolvedValue({ data: { user } }) },
       from: vi.fn().mockImplementation(() => {
-        callCount++;
-        if (callCount === 1) return mockChain(prompt); // prompt lookup
-        if (callCount === 2) return mockChain(null, null, 0); // pitch count: under cap
-        return mockChain(newPitch); // insert
+        fromCallCount++;
+        if (fromCallCount === 1) return mockChain(prompt); // prompt lookup
+        return mockChain(newPitch); // fetch created pitch
       }),
+      rpc: vi.fn().mockResolvedValue({ data: 'pitch-new', error: null }),
     };
     vi.mocked(createClient).mockResolvedValue(supabase as any);
 

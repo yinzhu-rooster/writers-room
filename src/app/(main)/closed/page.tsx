@@ -25,15 +25,18 @@ export default function ClosedTopicsPage() {
   const [loadingMore, setLoadingMore] = useState(false);
   const [error, setError] = useState('');
 
-  const sortRef = useRef(sort);
+  const abortRef = useRef<AbortController | null>(null);
 
   const loadPage = useCallback(async (pageNum: number, sortBy: SortValue, append: boolean) => {
+    abortRef.current?.abort();
+    const controller = new AbortController();
+    abortRef.current = controller;
+
     if (append) setLoadingMore(true); else setLoading(true);
     setError('');
     try {
-      const res = await fetch(`/api/topics?status=closed&sort=${sortBy}&page=${pageNum}`);
+      const res = await fetch(`/api/topics?status=closed&sort=${sortBy}&page=${pageNum}`, { signal: controller.signal });
       if (!res.ok) throw new Error('Failed to load');
-      if (sortRef.current !== sortBy) return;
       const data = await res.json();
       const newTopics = data.topics ?? [];
       const total = data.total ?? 0;
@@ -44,6 +47,7 @@ export default function ClosedTopicsPage() {
       }
       setHasMore(pageNum * (data.page_size ?? 100) < total);
     } catch (e) {
+      if (e instanceof DOMException && e.name === 'AbortError') return;
       setError(e instanceof Error ? e.message : 'Failed to load');
     }
     if (append) setLoadingMore(false); else setLoading(false);
@@ -51,10 +55,10 @@ export default function ClosedTopicsPage() {
 
   // Reset when sort changes
   useEffect(() => {
-    sortRef.current = sort;
     setPage(1);
     setHasMore(true);
     loadPage(1, sort, false);
+    return () => abortRef.current?.abort();
   }, [loadPage, sort]);
 
   // Load more pages

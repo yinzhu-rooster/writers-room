@@ -11,10 +11,17 @@ export async function GET() {
     supabase.from('reactions').select('*', { count: 'exact', head: true }),
   ]);
 
-  return NextResponse.json({
-    total_writers: users.count ?? 0,
-    total_topics: prompts.count ?? 0,
-    total_pitches: pitches.count ?? 0,
-    total_votes: reactions.count ?? 0,
-  });
+  return NextResponse.json(
+    {
+      total_writers: users.count ?? 0,
+      total_topics: prompts.count ?? 0,
+      total_pitches: pitches.count ?? 0,
+      total_votes: reactions.count ?? 0,
+    },
+    {
+      headers: {
+        'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=120',
+      },
+    }
+  );
 }

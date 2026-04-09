@@ -2,12 +2,28 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, act } from '@testing-library/react';
 import { CountdownTimer } from './CountdownTimer';
 
+// Mock IntersectionObserver to immediately trigger visibility
+class MockIntersectionObserver {
+  callback: IntersectionObserverCallback;
+  constructor(callback: IntersectionObserverCallback) {
+    this.callback = callback;
+  }
+  observe() {
+    // Simulate element being visible immediately
+    this.callback([{ isIntersecting: true } as IntersectionObserverEntry], this as unknown as IntersectionObserver);
+  }
+  disconnect() {}
+  unobserve() {}
+}
+
 beforeEach(() => {
+  vi.stubGlobal('IntersectionObserver', MockIntersectionObserver);
   vi.useFakeTimers();
 });
 
 afterEach(() => {
   vi.useRealTimers();
+  vi.unstubAllGlobals();
 });
 
 describe('CountdownTimer', () => {
