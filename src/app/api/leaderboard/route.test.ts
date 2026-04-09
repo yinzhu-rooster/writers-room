@@ -33,26 +33,13 @@ describe('GET /api/leaderboard', () => {
     vi.clearAllMocks();
   });
 
-  it('returns 401 when not authenticated', async () => {
-    const supabase = {
-      auth: { getUser: vi.fn().mockResolvedValue({ data: { user: null } }) },
-      from: vi.fn().mockReturnValue(mockChain()),
-    };
-    vi.mocked(createClient).mockResolvedValue(supabase as any);
-
-    const response = await GET(makeRequest());
-    expect(response.status).toBe(401);
-  });
-
   it('returns leaderboard sorted by total_laughs (default)', async () => {
-    const user = { id: 'user-1' };
     const users = [
       { id: 'u1', username: 'Alice', total_laughs: 100, total_reps: 10 },
       { id: 'u2', username: 'Bob', total_laughs: 50, total_reps: 5 },
     ];
     const chain = mockChain(users, null, 2);
     const supabase = {
-      auth: { getUser: vi.fn().mockResolvedValue({ data: { user } }) },
       from: vi.fn().mockReturnValue(chain),
     };
     vi.mocked(createClient).mockResolvedValue(supabase as any);
@@ -66,7 +53,6 @@ describe('GET /api/leaderboard', () => {
   });
 
   it('returns leaderboard sorted by avg_laughs (filters users with 0 reps)', async () => {
-    const user = { id: 'user-1' };
     const users = [
       { id: 'u1', username: 'Alice', total_laughs: 100, total_reps: 10 },
       { id: 'u2', username: 'Bob', total_laughs: 0, total_reps: 0 },
@@ -74,7 +60,6 @@ describe('GET /api/leaderboard', () => {
     ];
     const chain = mockChain(users, null, 3);
     const supabase = {
-      auth: { getUser: vi.fn().mockResolvedValue({ data: { user } }) },
       from: vi.fn().mockReturnValue(chain),
     };
     vi.mocked(createClient).mockResolvedValue(supabase as any);
@@ -91,14 +76,12 @@ describe('GET /api/leaderboard', () => {
   });
 
   it('returns empty leaderboard for top3_pct when no eligible users', async () => {
-    const user = { id: 'user-1' };
     // Users with total_reps < 100 are not eligible
     const users = [
       { id: 'u1', username: 'Alice', total_laughs: 10, total_reps: 5 },
     ];
     const chain = mockChain(users, null, 1);
     const supabase = {
-      auth: { getUser: vi.fn().mockResolvedValue({ data: { user } }) },
       from: vi.fn().mockReturnValue(chain),
     };
     vi.mocked(createClient).mockResolvedValue(supabase as any);
