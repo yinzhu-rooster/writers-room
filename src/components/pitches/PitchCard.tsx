@@ -4,6 +4,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { ReactionBar } from '@/components/reactions/ReactionBar';
 import { ReactionCounts } from '@/components/reactions/ReactionCounts';
 import { RankBadge } from '@/components/pitches/RankBadge';
+import { FlagButton } from '@/components/flags/FlagButton';
 import { AiBadge } from '@/components/ui/AiBadge';
 import type { ReactionType } from '@/types/enums';
 
@@ -25,6 +26,7 @@ export interface PitchData {
   is_revealed: boolean;
   is_ai: boolean;
   edit_deadline: string | null;
+  flag_count: number;
 }
 
 interface PitchCardProps {
@@ -87,6 +89,9 @@ export function PitchCard({ pitch, isOpen, onReactionChange, onEdit, onDelete }:
           <div className="flex items-center gap-2 mt-2 text-xs text-gray-400">
             {pitch.is_own && <span className="text-indigo-600 font-medium">You</span>}
             {pitch.edited_at && <span>(edited)</span>}
+            {pitch.flag_count > 0 && (
+              <span className="text-red-500 font-medium">{pitch.flag_count} {pitch.flag_count === 1 ? 'flag' : 'flags'}</span>
+            )}
             {!isOpen && pitch.is_revealed && pitch.username && !pitch.is_own && (
               <span className="text-gray-500 inline-flex items-center gap-1.5">by {pitch.username}{pitch.is_ai && <AiBadge />}</span>
             )}
@@ -134,21 +139,26 @@ export function PitchCard({ pitch, isOpen, onReactionChange, onEdit, onDelete }:
         )}
       </div>
 
-      <div className="mt-3">
-        {isOpen ? (
-          !pitch.is_own && (
-            <ReactionBar
-              pitchId={pitch.id}
-              myReaction={pitch.my_reaction}
-              onChange={onReactionChange}
+      <div className="mt-3 flex items-center justify-between gap-2">
+        <div>
+          {isOpen ? (
+            !pitch.is_own && (
+              <ReactionBar
+                pitchId={pitch.id}
+                myReaction={pitch.my_reaction}
+                onChange={onReactionChange}
+              />
+            )
+          ) : (
+            <ReactionCounts
+              laugh={pitch.laugh_count ?? 0}
+              smile={pitch.smile_count ?? 0}
+              surprise={pitch.surprise_count ?? 0}
             />
-          )
-        ) : (
-          <ReactionCounts
-            laugh={pitch.laugh_count ?? 0}
-            smile={pitch.smile_count ?? 0}
-            surprise={pitch.surprise_count ?? 0}
-          />
+          )}
+        </div>
+        {isOpen && !pitch.is_own && (
+          <FlagButton type="pitch" targetId={pitch.id} />
         )}
       </div>
     </div>

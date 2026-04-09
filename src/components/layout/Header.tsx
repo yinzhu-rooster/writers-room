@@ -8,21 +8,23 @@ import { UserMenu } from '@/components/auth/UserMenu';
 import { useUser } from '@/hooks/useUser';
 
 const navItems = [
-  { href: '/', label: 'Open Topics', authOnly: true },
-  { href: '/closed', label: 'Closed Topics', authOnly: false },
-  { href: '/leaderboard', label: 'Leaderboard', authOnly: false },
-  { href: '/stats', label: 'Stats', authOnly: true },
+  { href: '/', label: 'Open Topics', authOnly: true, adminOnly: false },
+  { href: '/closed', label: 'Closed Topics', authOnly: false, adminOnly: false },
+  { href: '/leaderboard', label: 'Leaderboard', authOnly: false, adminOnly: false },
+  { href: '/stats', label: 'Stats', authOnly: true, adminOnly: false },
+  { href: '/admin/flags', label: 'Admin', authOnly: true, adminOnly: true },
 ];
 
 export function Header() {
-  const { authUser, loading } = useUser();
+  const { authUser, profile, loading } = useUser();
   const pathname = usePathname();
   // Track whether we've hydrated to avoid server/client mismatch
   const [mounted, setMounted] = useState(false);
   useEffect(() => { setMounted(true); }, []);
 
+  const isAdmin = profile?.is_admin ?? false;
   const visibleItems = navItems.filter(
-    (item) => !item.authOnly || authUser
+    (item) => (!item.authOnly || authUser) && (!item.adminOnly || isAdmin)
   );
 
   return (

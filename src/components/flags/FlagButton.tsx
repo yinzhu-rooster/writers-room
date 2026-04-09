@@ -49,11 +49,12 @@ export function FlagButton({ type, targetId, initialFlagged = false }: FlagButto
     <div className="relative">
       <button
         onClick={() => setShowPicker(!showPicker)}
+        aria-label="Flag content"
         aria-expanded={showPicker}
         aria-haspopup="true"
-        className="text-xs text-gray-400 hover:text-red-500 transition-colors"
+        className="text-gray-400 hover:text-red-500 transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center"
       >
-        Flag
+        &hellip;
       </button>
       {showPicker && (
         <FlagReasonPicker

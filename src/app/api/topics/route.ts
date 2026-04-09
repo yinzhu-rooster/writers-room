@@ -78,12 +78,36 @@ export async function GET(request: NextRequest) {
     }
   }
 
+  // For admins, fetch flag counts per topic
+  const flagCountMap = new Map<string, number>();
+  if (user && prompts?.length) {
+    const { data: adminProfile } = await supabase
+      .from('users')
+      .select('is_admin')
+      .eq('id', user.id)
+      .single();
+
+    if (adminProfile?.is_admin) {
+      const topicIds = prompts.map(p => p.id);
+      const { data: flagData } = await supabase
+        .from('prompt_flags')
+        .select('prompt_id')
+        .in('prompt_id', topicIds);
+      if (flagData) {
+        for (const f of flagData) {
+          flagCountMap.set(f.prompt_id, (flagCountMap.get(f.prompt_id) ?? 0) + 1);
+        }
+      }
+    }
+  }
+
   // Anonymize creator on open prompts, attach stats + creator username
   const serialized = (prompts ?? []).map((p) => {
     const isOpen = new Date(p.closes_at) > new Date();
     const stats = statsMap.get(p.id) ?? { unique_writers: 0, total_reactions: 0 };
+    const flagCount = flagCountMap.get(p.id) ?? 0;
     if (isOpen && p.created_by !== user?.id) {
-      return { ...p, created_by: null, created_by_username: null, created_by_is_ai: false, unique_writers: 0, total_reactions: 0 };
+      return { ...p, created_by: null, created_by_username: null, created_by_is_ai: false, unique_writers: 0, total_reactions: 0, flag_count: flagCount };
     }
     const creator = p.created_by ? creatorMap.get(p.created_by) : null;
     return {
@@ -92,6 +116,7 @@ export async function GET(request: NextRequest) {
       created_by_is_ai: creator?.is_ai ?? false,
       unique_writers: stats.unique_writers,
       total_reactions: stats.total_reactions,
+      flag_count: flagCount,
     };
   });
 

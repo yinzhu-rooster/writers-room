@@ -2,11 +2,12 @@
 
 import Link from 'next/link';
 import { CountdownTimer } from './CountdownTimer';
+import { FlagButton } from '@/components/flags/FlagButton';
 import { AiBadge } from '@/components/ui/AiBadge';
 import type { Topic } from '@/types/database';
 
 interface TopicCardProps {
-  topic: Topic & { unique_writers?: number; total_reactions?: number; created_by_username?: string | null; created_by_is_ai?: boolean };
+  topic: Topic & { unique_writers?: number; total_reactions?: number; created_by_username?: string | null; created_by_is_ai?: boolean; flag_count?: number };
   isOpen: boolean;
 }
 
@@ -35,6 +36,9 @@ export function TopicCard({ topic, isOpen }: TopicCardProps) {
               <span>{(topic as { unique_writers?: number }).unique_writers} writers</span>
             ) : null}
             <span>{topic.submission_count} pitches</span>
+            {(topic.flag_count ?? 0) > 0 && (
+              <span className="text-red-500 font-medium">{topic.flag_count} {topic.flag_count === 1 ? 'flag' : 'flags'}</span>
+            )}
             {!isOpen && (topic as { total_reactions?: number }).total_reactions ? (
               <span>{(topic as { total_reactions?: number }).total_reactions} reactions</span>
             ) : null}
@@ -42,7 +46,13 @@ export function TopicCard({ topic, isOpen }: TopicCardProps) {
         </div>
         <div className="shrink-0 text-right">
           {isOpen ? (
-            <CountdownTimer closesAt={topic.closes_at} />
+            <div className="flex flex-col items-end gap-1">
+              <CountdownTimer closesAt={topic.closes_at} />
+              {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions */}
+              <div onClick={(e) => e.preventDefault()} onKeyDown={(e) => e.stopPropagation()}>
+                <FlagButton type="prompt" targetId={topic.id} />
+              </div>
+            </div>
           ) : (
             <>
               <span className="text-sm text-gray-400">Closed</span>

@@ -63,8 +63,36 @@ export async function GET(
     })
   );
 
+  // For admins, attach flag counts per pitch
+  const pitchFlagMap = new Map<string, number>();
+  if (user && pitches?.length) {
+    const { data: adminProfile } = await supabase
+      .from('users')
+      .select('is_admin')
+      .eq('id', user.id)
+      .single();
+
+    if (adminProfile?.is_admin) {
+      const pitchIds = pitches.map(p => p.id);
+      const { data: flagData } = await supabase
+        .from('pitch_flags')
+        .select('pitch_id')
+        .in('pitch_id', pitchIds);
+      if (flagData) {
+        for (const f of flagData) {
+          pitchFlagMap.set(f.pitch_id, (pitchFlagMap.get(f.pitch_id) ?? 0) + 1);
+        }
+      }
+    }
+  }
+
+  const withFlags = serialized.map((p) => ({
+    ...p,
+    flag_count: pitchFlagMap.get(p.id) ?? 0,
+  }));
+
   return NextResponse.json({
-    pitches: serialized,
+    pitches: withFlags,
     total: count ?? 0,
     page,
     page_size: PAGE_SIZE,

@@ -19,15 +19,15 @@ beforeEach(() => {
 });
 
 describe('FlagButton', () => {
-  it('renders "Flag" button', () => {
+  it('renders flag button', () => {
     render(<FlagButton type="pitch" targetId="pitch-1" />);
-    expect(screen.getByRole('button', { name: 'Flag' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Flag content' })).toBeInTheDocument();
   });
 
   it('shows FlagReasonPicker when clicked', async () => {
     const user = userEvent.setup();
     render(<FlagButton type="pitch" targetId="pitch-1" />);
-    await user.click(screen.getByRole('button', { name: 'Flag' }));
+    await user.click(screen.getByRole('button', { name: 'Flag content' }));
     expect(screen.getByRole('menu', { name: 'Flag reason' })).toBeInTheDocument();
   });
 
@@ -39,7 +39,7 @@ describe('FlagButton', () => {
   it('calls fetch on reason selection for pitch', async () => {
     const user = userEvent.setup();
     render(<FlagButton type="pitch" targetId="pitch-1" />);
-    await user.click(screen.getByRole('button', { name: 'Flag' }));
+    await user.click(screen.getByRole('button', { name: 'Flag content' }));
     await user.click(screen.getByRole('menuitem', { name: 'Offensive' }));
     expect(mockFetch).toHaveBeenCalledWith(
       '/api/pitches/pitch-1/flags',
@@ -54,7 +54,7 @@ describe('FlagButton', () => {
   it('calls fetch on reason selection for prompt', async () => {
     const user = userEvent.setup();
     render(<FlagButton type="prompt" targetId="prompt-1" />);
-    await user.click(screen.getByRole('button', { name: 'Flag' }));
+    await user.click(screen.getByRole('button', { name: 'Flag content' }));
     await user.click(screen.getByRole('menuitem', { name: 'Duplicate' }));
     expect(mockFetch).toHaveBeenCalledWith(
       '/api/topics/prompt-1/flags',
@@ -68,17 +68,17 @@ describe('FlagButton', () => {
   it('shows "Flagged" after successful flag', async () => {
     const user = userEvent.setup();
     render(<FlagButton type="pitch" targetId="pitch-1" />);
-    await user.click(screen.getByRole('button', { name: 'Flag' }));
+    await user.click(screen.getByRole('button', { name: 'Flag content' }));
     await user.click(screen.getByRole('menuitem', { name: 'Plagiarized' }));
     expect(screen.getByText('Flagged')).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'Flag' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Flag content' })).not.toBeInTheDocument();
   });
 
   it('shows "Flagged" on 409 conflict (already flagged)', async () => {
     mockFetch.mockResolvedValueOnce({ ok: false, status: 409, json: async () => ({}) });
     const user = userEvent.setup();
     render(<FlagButton type="pitch" targetId="pitch-1" />);
-    await user.click(screen.getByRole('button', { name: 'Flag' }));
+    await user.click(screen.getByRole('button', { name: 'Flag content' }));
     await user.click(screen.getByRole('menuitem', { name: 'Offensive' }));
     expect(screen.getByText('Flagged')).toBeInTheDocument();
   });
@@ -87,7 +87,7 @@ describe('FlagButton', () => {
     mockFetch.mockResolvedValueOnce({ ok: false, status: 500, json: async () => ({}) });
     const user = userEvent.setup();
     render(<FlagButton type="pitch" targetId="pitch-1" />);
-    await user.click(screen.getByRole('button', { name: 'Flag' }));
+    await user.click(screen.getByRole('button', { name: 'Flag content' }));
     await user.click(screen.getByRole('menuitem', { name: 'Offensive' }));
     expect(mockShowToast).toHaveBeenCalledWith('Failed to flag content', 'error');
   });
@@ -96,7 +96,7 @@ describe('FlagButton', () => {
     mockFetch.mockResolvedValueOnce({ ok: false, status: 500, json: async () => ({}) });
     const user = userEvent.setup();
     render(<FlagButton type="pitch" targetId="pitch-1" />);
-    await user.click(screen.getByRole('button', { name: 'Flag' }));
+    await user.click(screen.getByRole('button', { name: 'Flag content' }));
     await user.click(screen.getByRole('menuitem', { name: 'Offensive' }));
     expect(screen.queryByText('Flagged')).not.toBeInTheDocument();
   });
