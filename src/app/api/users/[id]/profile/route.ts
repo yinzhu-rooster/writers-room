@@ -27,6 +27,7 @@ export async function GET(
     { data: closedTopics },
     { data: bestFinish },
     { data: reactionTotals },
+    { count: reactionsGiven },
   ] = await Promise.all([
     supabase
       .from('pitches')
@@ -59,6 +60,10 @@ export async function GET(
       .eq('user_id', id)
       .is('deleted_at', null)
       .limit(1000),
+    supabase
+      .from('reactions')
+      .select('*', { count: 'exact', head: true })
+      .eq('user_id', id),
   ]);
 
   const reactions = (reactionTotals ?? []).reduce(
@@ -77,5 +82,6 @@ export async function GET(
     closed_topics: closedTopics ?? [],
     best_finish: bestFinish?.rank ?? null,
     reactions,
+    reactions_given: reactionsGiven ?? 0,
   });
 }

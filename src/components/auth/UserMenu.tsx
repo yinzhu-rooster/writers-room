@@ -83,7 +83,7 @@ export function UserMenu() {
             {profile.username}
           </div>
           <a
-            href="/stats"
+            href={`/writers/${profile.id}`}
             role="menuitem"
             tabIndex={-1}
             ref={el => { if (el) menuItemsRef.current[0] = el; }}

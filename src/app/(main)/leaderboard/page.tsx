@@ -3,16 +3,17 @@
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { LoadingSkeleton } from '@/components/ui/LoadingSkeleton';
 import { EmptyState } from '@/components/ui/EmptyState';
+import Link from 'next/link';
 import { useInfiniteScroll } from '@/hooks/useInfiniteScroll';
 import { AiBadge } from '@/components/ui/AiBadge';
 
-type SortMode = 'total_laughs' | 'avg_laughs' | 'total_reps' | 'top3_pct';
+type SortMode = 'total_laughs' | 'avg_laughs' | 'total_reps' | 'reactions_given';
 
 const SORT_OPTIONS: { value: SortMode; label: string }[] = [
   { value: 'total_laughs', label: 'Total Laughs' },
   { value: 'avg_laughs', label: 'Avg Laughs' },
   { value: 'total_reps', label: 'Most Reps' },
-  { value: 'top3_pct', label: 'Top 3%' },
+  { value: 'reactions_given', label: 'Reactions Given' },
 ];
 
 interface LeaderboardEntry {
@@ -23,7 +24,7 @@ interface LeaderboardEntry {
   total_laughs: number;
   total_reps: number;
   avg_laughs?: number;
-  top3_pct?: number;
+  reactions_given?: number;
 }
 
 export default function LeaderboardPage() {
@@ -81,7 +82,7 @@ export default function LeaderboardPage() {
       case 'total_laughs': return entry.total_laughs;
       case 'avg_laughs': return entry.avg_laughs?.toFixed(1) ?? '0';
       case 'total_reps': return entry.total_reps;
-      case 'top3_pct': return `${entry.top3_pct ?? 0}%`;
+      case 'reactions_given': return entry.reactions_given ?? 0;
     }
   };
 
@@ -116,9 +117,10 @@ export default function LeaderboardPage() {
       ) : (
         <div className="space-y-1">
           {entries.map((entry, i) => (
-            <div
+            <Link
               key={entry.id}
-              className="flex items-center gap-3 rounded-lg border border-gray-200 px-4 py-3"
+              href={`/writers/${entry.id}`}
+              className="flex items-center gap-3 rounded-lg border border-gray-200 px-4 py-3 hover:border-gray-300 hover:shadow-sm transition-all"
             >
               <span className="text-sm font-bold text-gray-400 w-8">
                 {i + 1}
@@ -134,7 +136,7 @@ export default function LeaderboardPage() {
               <span className="text-sm font-bold text-indigo-600">
                 {getValue(entry)}
               </span>
-            </div>
+            </Link>
           ))}
         </div>
       )}

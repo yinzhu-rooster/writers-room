@@ -7,7 +7,7 @@ import { EmptyState } from '@/components/ui/EmptyState';
 import { useInfiniteScroll } from '@/hooks/useInfiniteScroll';
 import { AiBadge } from '@/components/ui/AiBadge';
 
-type SortMode = 'name' | 'newest';
+type SortMode = 'name' | 'name_desc' | 'newest' | 'oldest';
 
 interface Writer {
   id: string;
@@ -72,18 +72,23 @@ export default function WritersPage() {
     <div>
       <h1 className="text-xl font-bold text-gray-900 mb-4">Writers</h1>
 
-      <div className="flex gap-2 mb-4">
-        {(['name', 'newest'] as const).map((s) => (
+      <div className="flex gap-2 mb-4 overflow-x-auto pb-1 -mb-1">
+        {([
+          { value: 'name' as const, label: 'A-Z' },
+          { value: 'name_desc' as const, label: 'Z-A' },
+          { value: 'newest' as const, label: 'Newest' },
+          { value: 'oldest' as const, label: 'Oldest' },
+        ]).map((s) => (
           <button
-            key={s}
-            onClick={() => setSort(s)}
-            className={`px-4 py-2 text-sm rounded-full transition-colors ${
-              sort === s
+            key={s.value}
+            onClick={() => setSort(s.value)}
+            className={`px-4 py-2 text-sm rounded-full whitespace-nowrap transition-colors ${
+              sort === s.value
                 ? 'bg-indigo-600 text-white'
                 : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
             }`}
           >
-            {s === 'name' ? 'A-Z' : 'Newest'}
+            {s.label}
           </button>
         ))}
       </div>

@@ -3,7 +3,7 @@ import { createClient } from '@/lib/supabase/server';
 import { MAX_PAGE } from '@/lib/constants';
 
 const PAGE_SIZE = 100;
-const VALID_SORTS = ['total_laughs', 'avg_laughs', 'total_reps', 'top3_pct'] as const;
+const VALID_SORTS = ['total_laughs', 'avg_laughs', 'total_reps', 'reactions_given'] as const;
 type SortMode = typeof VALID_SORTS[number];
 
 export async function GET(request: NextRequest) {
@@ -31,7 +31,7 @@ export async function GET(request: NextRequest) {
     });
   }
 
-  // For avg_laughs and top3_pct, compute on-read
+  // For avg_laughs and reactions_given, compute on-read
   // Limit to top 1000 users by total_laughs to avoid loading entire table
   const { data: users } = await supabase
     .from('users')
@@ -56,42 +56,42 @@ export async function GET(request: NextRequest) {
     });
   }
 
-  if (sort === 'top3_pct') {
-    // Single query: fetch all ranked pitches, then compute top3_pct per user in JS
-    const eligibleUsers = users.filter((u) => u.total_reps >= 100);
-    const eligibleIds = eligibleUsers.map((u) => u.id);
+  if (sort === 'reactions_given') {
+    // Use RPC to efficiently count reactions per user
+    const { data: ranked } = await supabase.rpc('get_reactions_given', {
+      p_limit: PAGE_SIZE,
+      p_offset: offset,
+    });
 
-    if (eligibleIds.length === 0) {
+    if (!ranked?.length) {
       return NextResponse.json({ leaderboard: [], total: 0, page, page_size: PAGE_SIZE, sort });
     }
 
-    const { data: rankedPitches } = await supabase
-      .from('pitches')
-      .select('user_id, rank')
-      .in('user_id', eligibleIds)
-      .is('deleted_at', null)
-      .not('rank', 'is', null);
+    // Fetch user profiles for the ranked user IDs
+    const rankedIds = ranked.map((r: { user_id: string }) => r.user_id);
+    const { data: rankedUsers } = await supabase
+      .from('users')
+      .select('id, username, avatar_url, is_ai, total_laughs, total_reps')
+      .in('id', rankedIds);
 
-    // Tally per user
-    const stats = new Map<string, { total: number; top3: number }>();
-    for (const p of rankedPitches ?? []) {
-      const s = stats.get(p.user_id) ?? { total: 0, top3: 0 };
-      s.total++;
-      if (p.rank <= 3) s.top3++;
-      stats.set(p.user_id, s);
-    }
+    const userMap = new Map((rankedUsers ?? []).map((u) => [u.id, u]));
 
-    const enriched = eligibleUsers.map((u) => {
-      const s = stats.get(u.id);
-      const pct = s && s.total > 0 ? (s.top3 / s.total) * 100 : 0;
-      return { ...u, top3_pct: Math.round(pct * 10) / 10 };
-    });
+    const leaderboard = ranked
+      .map((r: { user_id: string; reactions_given: number }) => {
+        const u = userMap.get(r.user_id);
+        if (!u) return null;
+        return { ...u, reactions_given: Number(r.reactions_given) };
+      })
+      .filter(Boolean);
 
-    const sorted = enriched.sort((a, b) => b.top3_pct - a.top3_pct);
+    // Get total count of users with reactions for pagination
+    const { count: totalWithReactions } = await supabase
+      .from('reactions')
+      .select('user_id', { count: 'exact', head: true });
 
     return NextResponse.json({
-      leaderboard: sorted.slice(offset, offset + PAGE_SIZE),
-      total: sorted.length,
+      leaderboard,
+      total: totalWithReactions ?? leaderboard.length,
       page,
       page_size: PAGE_SIZE,
       sort,

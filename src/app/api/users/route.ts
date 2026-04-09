@@ -17,6 +17,10 @@ export async function GET(request: NextRequest) {
 
   if (sort === 'newest') {
     query = query.order('created_at', { ascending: false });
+  } else if (sort === 'oldest') {
+    query = query.order('created_at', { ascending: true });
+  } else if (sort === 'name_desc') {
+    query = query.order('username', { ascending: false });
   } else {
     query = query.order('username', { ascending: true });
   }

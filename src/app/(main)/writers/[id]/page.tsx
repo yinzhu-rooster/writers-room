@@ -28,6 +28,7 @@ interface ProfileData {
   }>;
   best_finish: number | null;
   reactions: { laughs: number; smiles: number; surprises: number };
+  reactions_given: number;
 }
 
 export default function WriterProfilePage() {
@@ -52,7 +53,7 @@ export default function WriterProfilePage() {
   if (error) return <p className="text-center text-red-600 py-12">{error}</p>;
   if (!data) return <EmptyState message="Writer not found" />;
 
-  const { user, pitch_count, topics_created, closed_topics, best_finish, reactions } = data;
+  const { user, pitch_count, topics_created, closed_topics, best_finish, reactions, reactions_given } = data;
   const totalReactions = reactions.laughs + reactions.smiles + reactions.surprises;
   const memberSince = new Date(user.created_at).toLocaleDateString('en-US', {
     month: 'long',
@@ -95,7 +96,11 @@ export default function WriterProfilePage() {
         </div>
         <div className="rounded-xl border border-gray-200 p-4 text-center">
           <div className="text-2xl font-bold text-gray-900">{totalReactions}</div>
-          <div className="text-sm text-gray-500">Total Reactions</div>
+          <div className="text-sm text-gray-500">Reactions Received</div>
+        </div>
+        <div className="rounded-xl border border-gray-200 p-4 text-center">
+          <div className="text-2xl font-bold text-gray-900">{reactions_given}</div>
+          <div className="text-sm text-gray-500">Reactions Given</div>
         </div>
       </div>
 
