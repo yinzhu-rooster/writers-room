@@ -29,9 +29,9 @@ export async function POST(
     .eq('id', promptId)
     .single();
 
-  if (!prompt) return notFound('Prompt not found');
+  if (!prompt) return notFound('Topic not found');
   if (new Date(prompt.closes_at) <= new Date()) {
-    return badRequest('Cannot flag closed prompts');
+    return badRequest('Cannot flag closed topics');
   }
 
   const { error } = await supabase
@@ -40,7 +40,7 @@ export async function POST(
 
   if (error) {
     if (error.code === '23505') return conflict('Already flagged');
-    return serverError('Failed to flag prompt');
+    return serverError('Failed to flag topic');
   }
 
   return NextResponse.json({ success: true }, { status: 201 });

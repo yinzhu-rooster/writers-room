@@ -29,7 +29,7 @@ export async function GET(
     .eq('id', promptId)
     .single();
 
-  if (!prompt) return notFound('Prompt not found');
+  if (!prompt) return notFound('Topic not found');
 
   const isOpen = new Date(prompt.closes_at) > new Date();
 
@@ -96,9 +96,9 @@ export async function POST(
     .eq('id', promptId)
     .single();
 
-  if (!prompt) return notFound('Prompt not found');
+  if (!prompt) return notFound('Topic not found');
   if (new Date(prompt.closes_at) <= new Date()) {
-    return badRequest('This prompt is closed', 'PROMPT_CLOSED');
+    return badRequest('This topic is closed', 'PROMPT_CLOSED');
   }
 
   // Check pitch cap

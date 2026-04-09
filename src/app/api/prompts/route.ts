@@ -42,7 +42,7 @@ export async function GET(request: NextRequest) {
 
   const { data: prompts, count, error } = await query;
 
-  if (error) return serverError('Failed to load prompts');
+  if (error) return serverError('Failed to load topics');
 
   // For closed prompts, fetch stats (unique writers + total reactions) via RPC
   const statsMap = new Map<string, { unique_writers: number; total_reactions: number }>();
@@ -141,7 +141,7 @@ export async function POST(request: NextRequest) {
     .gt('closes_at', now);
 
   if ((count ?? 0) >= maxOpen) {
-    return badRequest(`You can only have ${maxOpen} open prompts at a time`, 'MAX_OPEN_PROMPTS');
+    return badRequest(`You can only have ${maxOpen} open topics at a time`, 'MAX_OPEN_PROMPTS');
   }
 
   const opensAt = new Date();
@@ -159,7 +159,7 @@ export async function POST(request: NextRequest) {
     .select()
     .single();
 
-  if (error) return serverError('Failed to create prompt');
+  if (error) return serverError('Failed to create topic');
 
   return NextResponse.json(prompt, { status: 201 });
 }

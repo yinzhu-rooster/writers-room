@@ -76,20 +76,20 @@ export function CreatePromptModal({ open, onClose, onCreated }: CreatePromptModa
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4" role="dialog" aria-modal="true" aria-label="Create a Prompt" onClick={onClose}>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4" role="dialog" aria-modal="true" aria-label="Create a Topic" onClick={onClose}>
       <div ref={trapRef} className="w-full max-w-md rounded-xl bg-white p-6 shadow-xl" onClick={(e) => e.stopPropagation()}>
-        <h2 className="text-lg font-bold text-gray-900 mb-4">Create a Prompt</h2>
+        <h2 className="text-lg font-bold text-gray-900 mb-4">Create a Topic</h2>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label htmlFor="create-prompt-body" className="block text-sm font-medium text-gray-700 mb-1">Prompt</label>
+            <label htmlFor="create-prompt-body" className="block text-sm font-medium text-gray-700 mb-1">Topic</label>
             <textarea
               id="create-prompt-body"
               value={body}
               onChange={(e) => setBody(e.target.value)}
               rows={3}
               maxLength={500}
-              placeholder="Write your comedy prompt..."
+              placeholder="Write your comedy topic..."
               className="w-full rounded-lg border border-gray-300 px-3 py-2 text-gray-900 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none resize-none"
             />
             <div className="text-xs text-gray-400 text-right">{body.length}/500</div>

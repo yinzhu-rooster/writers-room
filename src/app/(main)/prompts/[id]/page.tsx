@@ -38,7 +38,7 @@ export default function PromptDetailPage() {
   }, [loadPrompt]);
 
   if (loading) return <LoadingSkeleton count={1} height="h-32" />;
-  if (!prompt) return <EmptyState message="Prompt not found" />;
+  if (!prompt) return <EmptyState message="Topic not found" />;
 
   const isOpen = new Date(prompt.closes_at) > new Date();
 

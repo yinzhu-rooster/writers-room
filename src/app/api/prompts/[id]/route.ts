@@ -16,7 +16,7 @@ export async function GET(
     .eq('id', id)
     .single();
 
-  if (error || !prompt) return notFound('Prompt not found');
+  if (error || !prompt) return notFound('Topic not found');
 
   // Anonymize creator on open prompts (unless viewing own)
   const isOpen = new Date(prompt.closes_at) > new Date();

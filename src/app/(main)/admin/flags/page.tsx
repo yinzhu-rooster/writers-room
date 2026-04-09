@@ -65,7 +65,7 @@ export default function AdminFlagsPage() {
         {pitchFlags.length === 0 && <p className="text-sm text-gray-500">No pitch flags</p>}
       </div>
 
-      <h2 className="text-sm font-medium text-gray-700 mb-3">Prompt Flags ({promptFlags.length})</h2>
+      <h2 className="text-sm font-medium text-gray-700 mb-3">Topic Flags ({promptFlags.length})</h2>
       <div className="space-y-2">
         {promptFlags.map((f) => (
           <div key={f.id} className="rounded-lg border border-gray-200 p-3 text-sm">
@@ -77,7 +77,7 @@ export default function AdminFlagsPage() {
             <p className="text-gray-400 text-xs mt-1">Flagged by {f.users?.username ?? 'unknown'}</p>
           </div>
         ))}
-        {promptFlags.length === 0 && <p className="text-sm text-gray-500">No prompt flags</p>}
+        {promptFlags.length === 0 && <p className="text-sm text-gray-500">No topic flags</p>}
       </div>
     </div>
   );
